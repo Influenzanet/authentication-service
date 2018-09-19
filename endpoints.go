@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 )
 
 type userCredentials struct {
@@ -13,7 +14,7 @@ type userCredentials struct {
 	Password string `json:"password" binding:"required"`
 }
 
-type tokenResponse struct {
+type tokenMessage struct {
 	Token string `json:"token"`
 }
 
@@ -28,7 +29,7 @@ func sendJSONResponse(w http.ResponseWriter, payload interface{}) {
 	}
 }
 
-func login(w http.ResponseWriter, req *http.Request) {
+func loginParticipantHandl(w http.ResponseWriter, req *http.Request) {
 	// Only Post method is allowed:
 	if req.Method != "POST" {
 		err := errors.New("wrong method")
@@ -55,18 +56,17 @@ func login(w http.ResponseWriter, req *http.Request) {
 
 	// TODO: check credentials
 	log.Println(creds)
+	userID := uint(1)
 
-	// TODO: generate token
-	token := "test-token"
-
-	/*
-		err = errors.New("Test error")
-		http.Error(w, err.Error(), http.StatusForbidden)
+	// generate token
+	token, err := generateNewToken(userID, "participant")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
-	*/
+	}
 
 	// Send response
-	tokenResp := tokenResponse{
+	tokenResp := tokenMessage{
 		Token: token,
 	}
 	sendJSONResponse(w, tokenResp)
@@ -84,8 +84,26 @@ func signup() {
 
 }
 
-func checkToken() {
+func validateTokenHandl(w http.ResponseWriter, req *http.Request) {
+	tokenString := req.Header.Get("Authorization")
+	if len(tokenString) == 0 {
+		http.Error(w, errors.New("missing authorization header").Error(), http.StatusInternalServerError)
+		return
+	}
+	tokenString = strings.TrimPrefix(tokenString, "Bearer ")
 
+	// Parse and validate token
+	parsedToken, ok, err := validateToken(tokenString)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if !ok {
+		http.Error(w, errors.New("token not valid").Error(), http.StatusInternalServerError)
+		return
+	}
+	log.Println(parsedToken)
+	sendJSONResponse(w, parsedToken)
 }
 
 func renewToken() {
