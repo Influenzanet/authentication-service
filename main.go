@@ -2,16 +2,24 @@ package main
 
 import (
 	"log"
-	"net/http"
 
-	"github.com/gorilla/mux"
+	"github.com/gin-gonic/gin"
 )
+
+func init() {
+	gin.SetMode(gin.ReleaseMode)
+}
 
 func main() {
 	log.Println("Hello World")
-	r := mux.NewRouter()
 
-	r.HandleFunc("/login", loginParticipantHandl)
-	r.HandleFunc("/validate", validateTokenHandl)
-	log.Fatal(http.ListenAndServe(":3100", r))
+	router := gin.Default()
+
+	v1 := router.Group("/v1")
+	{
+		v1.POST("/login", loginParticipantHandl)
+		v1.GET("/validate", validateTokenHandl)
+	}
+
+	log.Fatal(router.Run(":3100"))
 }
