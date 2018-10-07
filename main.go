@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	gin.SetMode(gin.ReleaseMode)
+	//gin.SetMode(gin.ReleaseMode)
 }
 
 func main() {
@@ -17,8 +17,19 @@ func main() {
 
 	v1 := router.Group("/v1")
 	{
-		v1.POST("/login", loginParticipantHandl)
-		v1.GET("/validate", validateTokenHandl)
+		loginHandles := v1.Group("/login")
+		loginHandles.POST("/participant", loginParticipantHandl)
+		loginHandles.POST("/researcher", loginResearcherHandl)
+		loginHandles.POST("/admin", loginAdminHandl)
+
+		signupHandles := v1.Group("/signup")
+		signupHandles.POST("/participant", signupParticipantHandl)
+		signupHandles.POST("/researcher", signupResearcherHandl)
+		signupHandles.POST("/admin", signupAdminHandl)
+
+		tokenHandles := v1.Group("/token")
+		tokenHandles.POST("/validate", validateTokenHandl)
+		tokenHandles.POST("/refresh", renewTokenHandl)
 	}
 
 	log.Fatal(router.Run(":3100"))

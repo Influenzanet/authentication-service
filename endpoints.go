@@ -42,16 +42,16 @@ func loginParticipantHandl(context *gin.Context) {
 	context.JSON(http.StatusOK, tokenResp)
 }
 
-func loginResearcher() {
-
+func loginResearcherHandl(context *gin.Context) {
+	context.JSON(http.StatusNotImplemented, gin.H{"error": "not implemented"})
 }
 
-func loginAdmin() {
-
+func loginAdminHandl(context *gin.Context) {
+	context.JSON(http.StatusNotImplemented, gin.H{"error": "not implemented"})
 }
 
-func signup() {
-
+func signupHandl(context *gin.Context) {
+	context.JSON(http.StatusNotImplemented, gin.H{"error": "not implemented"})
 }
 
 func validateTokenHandl(context *gin.Context) {
@@ -86,6 +86,18 @@ func validateTokenHandl(context *gin.Context) {
 	context.JSON(http.StatusOK, parsedToken)
 }
 
-func renewToken() {
+func signupParticipantHandl(context *gin.Context) {
+	context.JSON(http.StatusNotImplemented, gin.H{"error": "not implemented"})
+}
 
+func signupResearcherHandl(context *gin.Context) {
+	context.JSON(http.StatusNotImplemented, gin.H{"error": "not implemented"})
+}
+
+func signupAdminHandl(context *gin.Context) {
+	context.JSON(http.StatusNotImplemented, gin.H{"error": "not implemented"})
+}
+
+func renewTokenHandl(context *gin.Context) {
+	context.JSON(http.StatusNotImplemented, gin.H{"error": "not implemented"})
 }
