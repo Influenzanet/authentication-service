@@ -11,12 +11,12 @@
 
   `GET`
 
-* **Header Params**
+* **Header Params** <br />
   **Required:**
   `Authorization: Bearer <token string>`
 
-* **URL Params**
-  **Optional:** (instead of header params)
+* **URL Params** <br />
+  **Optional:** (instead of header params) <br />
   `token=[string]`
 
 * **Data Params**
@@ -24,31 +24,31 @@
 
 * **Success Response:**
 
-  * **Code:** 200
+  * **Code:** 200 <br />
     **Content:** `{ "token": "<token string>" }`
 
 * **Error Response:**
 
-  * **Code:** 400 Bad request
-    **Content:** `{ "error" : "<error message>" }`
+  * **Code:** 400 Bad request <br />
+    **Content:** `{ "error" : "<error message>" }` <br />
     **Typical reason:** Missing current token from request's body.
 
   OR
 
-  * **Code:** 401 Unauthorized
-    **Content:** `{ "error" : "<error message>" }`
+  * **Code:** 401 Unauthorized <br />
+    **Content:** `{ "error" : "<error message>" }` <br />
     **Typical reason:** Current token is not valid (e.g. wrong or expired).
 
   OR
 
-  * **Code:** 418 I'm a tea pot
-    **Content:** `{ "error" : "can't renew token so often" }`
+  * **Code:** 418 I'm a tea pot <br />
+    **Content:** `{ "error" : "can't renew token so often" }` <br />
     **Typical reason:** Client sends token renewal request too often.
 
   OR
 
-  * **Code:** 500 Internal server error
-    **Content:** `{ "error" : "<error message>" }`
+  * **Code:** 500 Internal server error <br />
+    **Content:** `{ "error" : "<error message>" }` <br />
     **Typical reason:** Something went wrong during the token generation, e.g., because signing key is not available.
 
 * **Sample Call:**
