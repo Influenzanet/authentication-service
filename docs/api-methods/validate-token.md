@@ -10,35 +10,35 @@
 
   `GET`
 
-* **Header Params**
-  **Required:**
+* **Header Params** <br />
+  **Required:** <br />
   `Authorization: Bearer <token string>`
 
-* **URL Params**
-  **Optional:** (instead of header params)
+* **URL Params** <br />
+  **Optional:** (instead of header params) <br />
   `token=[string]`
 
 * **Success Response:**
 
-  * **Code:** 200
+  * **Code:** 200 <br />
     **Content:** `{ "token": "<token string>" }`
 
 * **Error Response:**
 
-  * **Code:** 400 Bad request
-    **Content:** `{ "error" : "no Authorization token found" }`
+  * **Code:** 400 Bad request <br />
+    **Content:** `{ "error" : "no Authorization token found" }` <br />
     **Typical reason:** Token is not sent with the request, neither in the header nor as an url param.
 
   OR
 
-  * **Code:** 401 Unauthorized
-    **Content:** `{ "error" : "token not valid" }`
+  * **Code:** 401 Unauthorized <br />
+    **Content:** `{ "error" : "token not valid" }` <br />
     **Typical reason:** Token expired or wrong (e.g. signed with the wrong key).
 
   OR
 
-  * **Code:** 500 Internal server error
-    **Content:** `{ "error" : "<error message>" }`
+  * **Code:** 500 Internal server error <br />
+    **Content:** `{ "error" : "<error message>" }` <br />
     **Typical reason:** Something went wrong during the token decrypting process, e.g., because verification key is not available.
 
 

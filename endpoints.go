@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -95,5 +96,47 @@ func validateTokenHandl(context *gin.Context) {
 }
 
 func renewTokenHandl(context *gin.Context) {
-	context.JSON(http.StatusNotImplemented, gin.H{"error": "not implemented"})
+	req := context.Request
+
+	// Get token string from url or header field
+	var token string
+	tokens, ok := req.Header["Authorization"]
+	if ok && len(tokens) >= 1 {
+		token = tokens[0]
+		token = strings.TrimPrefix(token, "Bearer ")
+	} else if len(req.FormValue("token")) > 0 {
+		token = req.FormValue("token")
+	} else {
+		context.JSON(http.StatusBadRequest, gin.H{"error": "no Authorization token found"})
+		return
+	}
+
+	// Parse and validate token
+	parsedToken, ok, _, err := validateToken(token)
+	if err != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	if !ok {
+		context.JSON(http.StatusUnauthorized, gin.H{"error": "token not valid"})
+		return
+	}
+
+	// Check for too frequent requests:
+	if time.Now().Unix() < time.Unix(parsedToken.StandardClaims.IssuedAt, 0).Add(minTokenAge).Unix() {
+		context.JSON(http.StatusTeapot, gin.H{"error": "can't renew token so often"})
+		return
+	}
+
+	newToken, err := generateNewToken(parsedToken.UserID, parsedToken.Role)
+	if err != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Send response
+	tokenResp := tokenMessage{
+		Token: newToken,
+	}
+	context.JSON(http.StatusOK, tokenResp)
 }

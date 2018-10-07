@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	//gin.SetMode(gin.ReleaseMode)
+	gin.SetMode(gin.ReleaseMode)
 }
 
 func main() {
