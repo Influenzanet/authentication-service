@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"strings"
@@ -25,8 +27,20 @@ func loginParticipantHandl(context *gin.Context) {
 		return
 	}
 
+	body, err := context.GetRawData()
 	// TODO: check credentials
 	log.Println(creds)
+	resp, err := http.Post(userManagementServer+"/login", "application/json", bytes.NewBuffer(body))
+
+	if err != nil {
+		log.Println(err)
+		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	defer resp.Body.Close()
+	respBody, err := ioutil.ReadAll(resp.Body)
+	log.Println(string(respBody))
+
 	userID := uint(1)
 
 	// generate token
@@ -128,6 +142,7 @@ func renewTokenHandl(context *gin.Context) {
 		return
 	}
 
+	// Generate new token:
 	newToken, err := generateNewToken(parsedToken.UserID, parsedToken.Role)
 	if err != nil {
 		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
