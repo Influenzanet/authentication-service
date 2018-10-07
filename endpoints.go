@@ -20,6 +20,10 @@ type tokenMessage struct {
 	Token string `json:"token"`
 }
 
+func checkTokenAgeMaturity(issuedAt int64) bool {
+	return time.Now().Unix() < time.Unix(issuedAt, 0).Add(minTokenAge).Unix()
+}
+
 func loginParticipantHandl(context *gin.Context) {
 	var creds userCredentials
 	if err := context.ShouldBindJSON(&creds); err != nil {
@@ -137,7 +141,7 @@ func renewTokenHandl(context *gin.Context) {
 	}
 
 	// Check for too frequent requests:
-	if time.Now().Unix() < time.Unix(parsedToken.StandardClaims.IssuedAt, 0).Add(minTokenAge).Unix() {
+	if checkTokenAgeMaturity(parsedToken.StandardClaims.IssuedAt) {
 		context.JSON(http.StatusTeapot, gin.H{"error": "can't renew token so often"})
 		return
 	}

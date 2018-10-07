@@ -12,16 +12,16 @@ import (
 
 // location of the files used for signing and verification
 const (
-	privateKeyPath      = "keys/token-signing.rsa"     // openssl genrsa -out token-signing.rsa 2048
-	publicKeyPath       = "keys/token-signing.rsa.pub" // openssl rsa -in token-signing.rsa -pubout > token-signing.rsa.pub
-	oldPublicKeyPath    = "keys/old-token-signing.rsa.pub"
-	tokenValidityPeriod = 72               // in hours
-	minTokenAge         = time.Minute * 30 // don't allow token renewal before that time
-	retrySleepTime      = 100 * time.Millisecond
+	privateKeyPath   = "keys/token-signing.rsa"     // openssl genrsa -out token-signing.rsa 2048
+	publicKeyPath    = "keys/token-signing.rsa.pub" // openssl rsa -in token-signing.rsa -pubout > token-signing.rsa.pub
+	oldPublicKeyPath = "keys/old-token-signing.rsa.pub"
+	retrySleepTime   = 100 * time.Millisecond
 )
 
 var (
-	verifyKey *rsa.PublicKey
+	verifyKey           *rsa.PublicKey
+	tokenValidityPeriod = time.Hour * 72   // in hours
+	minTokenAge         = time.Minute * 30 // don't allow token renewal before that time
 )
 
 type userClaims struct {
@@ -82,7 +82,7 @@ func generateNewToken(userID uint, userRole string) (string, error) {
 		userID,
 		userRole,
 		jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Hour * tokenValidityPeriod).Unix(),
+			ExpiresAt: time.Now().Add(tokenValidityPeriod).Unix(),
 			IssuedAt:  time.Now().Unix(),
 		},
 	}

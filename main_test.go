@@ -4,19 +4,22 @@ import (
 	"bytes"
 	"encoding/json"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
 var ts *httptest.Server
 
-func MockLoginHandl(context *gin.Context) {
-	context.JSON(http.StatusOK, gin.H{"msg": "ok"})
+func mock_checkTokenAgeMaturity(issuedAt int64) bool {
+	log.Println("override")
+	return time.Now().Unix() < time.Unix(issuedAt, 0).Add(time.Second*5).Unix()
 }
 
 // This function is used for setup before executing the test functions
@@ -63,4 +66,9 @@ func TestLoginParticipant(t *testing.T) {
 		t.Errorf("body wrong")
 		t.Fail()
 	}
+}
+
+func TestRefreshToken(t *testing.T) {
+	tokenValidityPeriod = time.Second * 10
+	minTokenAge = time.Second * 3
 }
