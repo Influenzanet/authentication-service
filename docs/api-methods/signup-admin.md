@@ -1,10 +1,10 @@
-**Login Participant**
+**Signup Admin**
 ----
-  Check email and password for a participant and return a token if credentials are correct.
+  Start registration/promotion process for a new admin account with the given email address and password. **TODO** registration process still to be defined
 
 * **URL**
 
-  /v1/login/participant
+  /v1/signup/admin
 
 * **Method:**
 
@@ -31,15 +31,15 @@
 
   OR
 
-  * **Code:** 401 Unauthorized
-    **Content:** `{ "error" : "<error message>" }`
-    **Typical reason:** Email or password wrong or doesn't belong to any registered participant.
+  * **Code:** 400 Bad request
+    **Content:** `{ "error" : "email address already in use" }`
+    **Typical reason:** Email address already used for an other account.
 
   OR
 
   * **Code:** 500 Internal server error
     **Content:** `{ "error" : "<error message>" }`
-    **Typical reason:** Something went wrong during the token generation. User's credentials are ok, but method failed generating a valid token, e.g. because signing key is not available.
+    **Typical reason:** Something went wrong during the token generation. User's input are ok, but method failed generating a valid token, e.g. because signing key is not available.
 
 * **Sample Call:**
   TODO: add sample call for go
@@ -54,6 +54,5 @@
       }
     });
   ```
-
 * **Notes:**
   None

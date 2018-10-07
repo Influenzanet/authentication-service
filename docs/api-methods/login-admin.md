@@ -1,6 +1,6 @@
 **Login Admin**
 ----
-  Check email and password for logging in as an admin and return a token if credentials are correct.
+  Check email and password for login in as an admin and return a token if credentials are correct. User has to be in the admin list to be able to sign in as an admin. The role 'admin' is written into the token.
 
 * **URL**
 
@@ -54,3 +54,6 @@
       }
     });
   ```
+
+* **Notes:**
+  None

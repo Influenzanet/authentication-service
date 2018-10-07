@@ -28,8 +28,8 @@ func main() {
 		signupHandles.POST("/admin", signupAdminHandl)
 
 		tokenHandles := v1.Group("/token")
-		tokenHandles.POST("/validate", validateTokenHandl)
-		tokenHandles.POST("/refresh", renewTokenHandl)
+		tokenHandles.GET("/validate", validateTokenHandl)
+		tokenHandles.GET("/renew", renewTokenHandl)
 	}
 
 	log.Fatal(router.Run(":3100"))

@@ -1,6 +1,6 @@
-**Login Admin**
+**Login Researcher**
 ----
-  Check email and password for logging in as a researcher and return a token if credentials are correct.
+  Check email and password for logging in as a researcher and return a token if credentials are correct. User has to be in the researcher list to be able to sign in as a researcher. The role 'researcher' is written into the token.
 
 * **URL**
 
@@ -54,3 +54,5 @@
       }
     });
   ```
+* **Notes:**
+  None
