@@ -29,13 +29,9 @@
     **Content:** `{ "error" : "<error message>" }` <br />
     **Typical reason:** Data format (json body of the Post request) wrong, e.g. missing key for email or password.
 
-  OR
-
   * **Code:** 401 Unauthorized <br />
     **Content:** `{ "error" : "<error message>" }` <br />
     **Typical reason:** Password is wrong or email doesn't belong to any registered admin.
-
-  OR
 
   * **Code:** 500 Internal server error <br />
     **Content:** `{ "error" : "<error message>" }` <br />

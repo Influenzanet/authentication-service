@@ -33,19 +33,13 @@
     **Content:** `{ "error" : "<error message>" }` <br />
     **Typical reason:** Missing current token from request's body.
 
-  OR
-
   * **Code:** 401 Unauthorized <br />
     **Content:** `{ "error" : "<error message>" }` <br />
     **Typical reason:** Current token is not valid (e.g. wrong or expired).
 
-  OR
-
   * **Code:** 418 I'm a tea pot <br />
     **Content:** `{ "error" : "can't renew token so often" }` <br />
     **Typical reason:** Client sends token renewal request too often.
-
-  OR
 
   * **Code:** 500 Internal server error <br />
     **Content:** `{ "error" : "<error message>" }` <br />

@@ -29,13 +29,9 @@
     **Content:** `{ "error" : "no Authorization token found" }` <br />
     **Typical reason:** Token is not sent with the request, neither in the header nor as an url param.
 
-  OR
-
   * **Code:** 401 Unauthorized <br />
     **Content:** `{ "error" : "token not valid" }` <br />
     **Typical reason:** Token expired or wrong (e.g. signed with the wrong key).
-
-  OR
 
   * **Code:** 500 Internal server error <br />
     **Content:** `{ "error" : "<error message>" }` <br />
