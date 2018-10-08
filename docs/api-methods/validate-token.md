@@ -21,7 +21,7 @@
 * **Success Response:**
 
   * **Code:** 200 <br />
-    **Content:** `{ "token": "<token string>" }`
+    **Content:** `{ "user_id": <database id: uint>, "role": <"participant" | "researcher" | "admin">, ... <token infos>  }`
 
 * **Error Response:**
 

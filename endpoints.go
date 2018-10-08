@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -14,6 +15,16 @@ import (
 type userCredentials struct {
 	Email    string `json:"email" binding:"required"`
 	Password string `json:"password" binding:"required"`
+}
+
+type userModel struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+	ID       uint   `json:"user_id"`
+}
+
+type errorResponse struct {
+	Error string `json:"error"`
 }
 
 type tokenMessage struct {
@@ -31,24 +42,38 @@ func loginParticipantHandl(context *gin.Context) {
 		return
 	}
 
-	body, err := context.GetRawData()
-	// TODO: check credentials
-	log.Println(creds)
-	resp, err := http.Post(userManagementServer+"/login", "application/json", bytes.NewBuffer(body))
+	loginPayload, err := json.Marshal(creds)
 
+	// reach out to user-management service to check credentials
+	resp, err := http.Post(userManagementServer+"/login-participant", "application/json", bytes.NewBuffer(loginPayload))
 	if err != nil {
-		log.Println(err)
 		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	defer resp.Body.Close()
-	respBody, err := ioutil.ReadAll(resp.Body)
-	log.Println(string(respBody))
+	if resp.StatusCode != http.StatusOK {
+		respBody, err := ioutil.ReadAll(resp.Body)
+		currentError := errorResponse{}
+		jsonErr := json.Unmarshal(respBody, &currentError)
+		if jsonErr != nil {
+			context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		context.JSON(resp.StatusCode, currentError)
+		return
 
-	userID := uint(1)
+	}
+
+	respBody, err := ioutil.ReadAll(resp.Body)
+	currentUser := userModel{}
+	jsonErr := json.Unmarshal(respBody, &currentUser)
+	if jsonErr != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 
 	// generate token
-	token, err := generateNewToken(userID, "participant")
+	token, err := generateNewToken(currentUser.ID, "participant")
 	if err != nil {
 		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
