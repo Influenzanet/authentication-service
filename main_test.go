@@ -115,98 +115,107 @@ func TestLoginParticipant(t *testing.T) {
 	/********************************************/
 	/***** Check login with wrong email: *****/
 	/********************************************/
-	t.Logf("Testing login with wrong email")
-	loginData := &userCredentials{
-		Email:    "test@test.com",
-		Password: "testpassword",
-	}
-	loginPayload, _ := json.Marshal(loginData)
+	t.Run("Testing login with wrong email", func(t *testing.T) {
+		loginData := &userCredentials{
+			Email:    "test@test.com",
+			Password: "testpassword",
+		}
+		loginPayload, _ := json.Marshal(loginData)
 
-	w := performRequest(r, "POST", "/v1/login/participant", bytes.NewBuffer(loginPayload))
-	// Convert the JSON response to a map
-	var response map[string]string
-	if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
-		t.Errorf("error parsing response body: %s", err.Error())
-	}
+		w := performRequest(r, "POST", "/v1/login/participant", bytes.NewBuffer(loginPayload))
 
-	value, exists := response["error"]
-	if w.Code != http.StatusForbidden || !exists || value != "wrong email or password" {
-		t.Errorf("status code: %d", w.Code)
-		t.Errorf("response content: %s", w.Body.String())
-		return
-	}
+		// Convert the JSON response to a map
+		var response map[string]string
+		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
+			t.Errorf("error parsing response body: %s", err.Error())
+		}
+
+		value, exists := response["error"]
+		if w.Code != http.StatusForbidden || !exists || value != "wrong email or password" {
+			t.Errorf("status code: %d", w.Code)
+			t.Errorf("response content: %s", w.Body.String())
+			return
+		}
+	})
 
 	/********************************************/
 	/***** Check login with wrong password: *****/
 	/********************************************/
-	t.Logf("Testing login with wrong password")
-	loginData = &userCredentials{
-		Email:    "test-p@test.com",
-		Password: "testpasswor",
-	}
-	loginPayload, _ = json.Marshal(loginData)
+	t.Run("Testing login with wrong password", func(t *testing.T) {
+		loginData := &userCredentials{
+			Email:    "test-p@test.com",
+			Password: "testpasswor",
+		}
+		loginPayload, _ := json.Marshal(loginData)
 
-	w = performRequest(r, "POST", "/v1/login/participant", bytes.NewBuffer(loginPayload))
+		w := performRequest(r, "POST", "/v1/login/participant", bytes.NewBuffer(loginPayload))
 
-	// Convert the JSON response to a map
-	if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
-		t.Errorf("error parsing response body: %s", err.Error())
-	}
+		// Convert the JSON response to a map
+		var response map[string]string
+		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
+			t.Errorf("error parsing response body: %s", err.Error())
+		}
 
-	value, exists = response["error"]
-	if w.Code != http.StatusForbidden || !exists || value != "wrong email or password" {
-		t.Errorf("status code: %d", w.Code)
-		t.Errorf("response content: %s", w.Body.String())
-		return
-	}
+		value, exists := response["error"]
+		if w.Code != http.StatusForbidden || !exists || value != "wrong email or password" {
+			t.Errorf("status code: %d", w.Code)
+			t.Errorf("response content: %s", w.Body.String())
+			return
+		}
+	})
 
 	/********************************************/
 	/***** Check login with correct email and password: ****/
 	/********************************************/
-	t.Logf("Testing login with correct email and password")
-	loginData = &userCredentials{
-		Email:    "test-p@test.com",
-		Password: "testpassword",
-	}
-	loginPayload, _ = json.Marshal(loginData)
+	t.Run("Testing login with correct email and password", func(t *testing.T) {
+		t.Logf("Testing login with correct email and password")
+		loginData := &userCredentials{
+			Email:    "test-p@test.com",
+			Password: "testpassword",
+		}
+		loginPayload, _ := json.Marshal(loginData)
 
-	w = performRequest(r, "POST", "/v1/login/participant", bytes.NewBuffer(loginPayload))
+		w := performRequest(r, "POST", "/v1/login/participant", bytes.NewBuffer(loginPayload))
 
-	// Convert the JSON response to a map
-	if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
-		t.Errorf("error parsing response body: %s", err.Error())
-	}
+		// Convert the JSON response to a map
+		var response map[string]string
+		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
+			t.Errorf("error parsing response body: %s", err.Error())
+		}
 
-	value, exists = response["token"]
-	if w.Code != http.StatusOK || !exists {
-		t.Errorf("status code: %d", w.Code)
-		t.Errorf("response content: %s", w.Body.String())
-		return
-	}
+		_, exists := response["token"]
+		if w.Code != http.StatusOK || !exists {
+			t.Errorf("status code: %d", w.Code)
+			t.Errorf("response content: %s", w.Body.String())
+			return
+		}
+	})
 
 	/********************************************/
 	/***** Check login with missing required fields: ****/
 	/********************************************/
-	t.Logf("Testing login with missing required fields")
-	loginData = &userCredentials{
-		Email:    "",
-		Password: "",
-	}
-	loginPayload, _ = json.Marshal(loginData)
+	t.Run("Testing login with missing required fields", func(t *testing.T) {
+		loginData := &userCredentials{
+			Email:    "",
+			Password: "",
+		}
+		loginPayload, _ := json.Marshal(loginData)
 
-	w = performRequest(r, "POST", "/v1/login/participant", bytes.NewBuffer(loginPayload))
+		w := performRequest(r, "POST", "/v1/login/participant", bytes.NewBuffer(loginPayload))
 
-	// Convert the JSON response to a map
-	if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
-		t.Errorf("error parsing response body: %s", err.Error())
-	}
+		// Convert the JSON response to a map
+		var response map[string]string
+		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
+			t.Errorf("error parsing response body: %s", err.Error())
+		}
 
-	value, exists = response["error"]
-	if w.Code != http.StatusBadRequest || !exists {
-		t.Errorf("status code: %d", w.Code)
-		t.Errorf("response content: %s", w.Body.String())
-		return
-	}
+		_, exists := response["error"]
+		if w.Code != http.StatusBadRequest || !exists {
+			t.Errorf("status code: %d", w.Code)
+			t.Errorf("response content: %s", w.Body.String())
+			return
+		}
+	})
 }
 
 func TestRefreshToken(t *testing.T) {
