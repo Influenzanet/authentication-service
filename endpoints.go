@@ -17,7 +17,7 @@ type userCredentials struct {
 	Password string `json:"password" binding:"required"`
 }
 
-type userModel struct {
+type UserModel struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 	ID       uint   `json:"user_id"`
@@ -65,7 +65,7 @@ func loginParticipantHandl(context *gin.Context) {
 	}
 
 	respBody, err := ioutil.ReadAll(resp.Body)
-	currentUser := userModel{}
+	currentUser := UserModel{}
 	jsonErr := json.Unmarshal(respBody, &currentUser)
 	if jsonErr != nil {
 		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -147,6 +147,10 @@ func renewTokenHandl(context *gin.Context) {
 	if ok && len(tokens) >= 1 {
 		token = tokens[0]
 		token = strings.TrimPrefix(token, "Bearer ")
+		if len(token) == 0 {
+			context.JSON(http.StatusBadRequest, gin.H{"error": "no Authorization token found"})
+			return
+		}
 	} else if len(req.FormValue("token")) > 0 {
 		token = req.FormValue("token")
 	} else {
