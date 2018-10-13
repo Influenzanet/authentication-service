@@ -31,7 +31,7 @@
 
   * **Code:** 400 Bad request <br />
     **Content:** `{ "error" : "<error message>" }` <br />
-    **Typical reason:** Missing current token from request's body.
+    **Typical reason:** Missing current token from request's header or as url param.
 
   * **Code:** 401 Unauthorized <br />
     **Content:** `{ "error" : "<error message>" }` <br />

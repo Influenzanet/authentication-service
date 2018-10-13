@@ -244,7 +244,7 @@ func TestLoginParticipant(t *testing.T) {
 	})
 }
 
-func getTokenForT() string {
+func getTokenForParticipant() string {
 	r := gin.Default()
 	r.POST("/v1/login/participant", loginParticipantHandl)
 
@@ -269,8 +269,8 @@ func getTokenForT() string {
 }
 
 func TestRenewToken(t *testing.T) {
-	tokenValidityPeriod = time.Second * 5
-	minTokenAge = time.Second * 3
+	tokenValidityPeriod = time.Second * 2
+	minTokenAge = time.Second * 1
 
 	r := gin.Default()
 	r.GET("/v1/token/renew", renewTokenHandl)
@@ -316,23 +316,152 @@ func TestRenewToken(t *testing.T) {
 	})
 
 	// Test with empty token in url
+	t.Run("Test with empty token in url", func(t *testing.T) {
+		req, _ := http.NewRequest("GET", "/v1/token/renew?token=", nil)
+		w := performRequest(r, req)
+
+		// Convert the JSON response to a map
+		var response map[string]string
+		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
+			t.Errorf("error parsing response body: %s", err.Error())
+		}
+
+		_, exists := response["error"]
+		if w.Code != http.StatusBadRequest || !exists {
+			t.Errorf("status code: %d instead of %d", w.Code, http.StatusBadRequest)
+			t.Errorf("response content: %s", w.Body.String())
+			return
+		}
+	})
+
+	badToken := "eydfsdfsdffsdfsdf.w45345sdfsdvcsdsdf.435345fsdf-4rwefsdfsd" // "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJyb2xlIjoicGFydGljaXBhbnQiLCJleHAiOjE1Mzk0MTc0MzAsImlhdCI6MTUzOTQxNzQyNX0.klxofJLg5J31v7hKO7TbPrceBzyYlp9kIAJuotUmY11pk08Hnn2uHtuDfdqBWVtcI_lQ-vKiikVs5icrewyQOXMzTesQXI41SZvRdEQfit1MZ5syE0a2PODRFsizaqT5vqVN04ZzX_3iPEvSBP25wMy8R4dzYaY5XcR2heJWIxaNFd3w65UDa_mNk4u3Oem7XO1Ufn_-ay98XqAUg5Zo0TI9sk2WQF57pzXAlHMVmCMNW1bP_OPra9CCQb2pUm2sKJiAgWVOBVB4lz50VoTsoJimQoTc5UpF3SCujL-Yt5mh7d7EUvDkKoSuqd5Pc8iKHs1Ix9jSmtoLpPxmCAnepA"
 
 	// Test with wrong token
+	t.Run("Testing with wrong token", func(t *testing.T) {
+		req, _ := http.NewRequest("GET", "/v1/token/renew", nil)
+		req.Header.Add("Authorization", "Bearer "+badToken)
+		w := performRequest(r, req)
+
+		// Convert the JSON response to a map
+		var response map[string]string
+		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
+			t.Errorf("error parsing response body: %s", err.Error())
+		}
+
+		_, exists := response["error"]
+		if w.Code != http.StatusUnauthorized || !exists {
+			t.Errorf("status code: %d instead of %d", w.Code, http.StatusUnauthorized)
+			t.Errorf("response content: %s", w.Body.String())
+			return
+		}
+	})
 
 	// Test with wrong token in url
+	t.Run("Test with wrong token in url", func(t *testing.T) {
+		req, _ := http.NewRequest("GET", "/v1/token/renew?token="+badToken, nil)
+		w := performRequest(r, req)
 
-	token := getTokenForT()
+		// Convert the JSON response to a map
+		var response map[string]string
+		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
+			t.Errorf("error parsing response body: %s", err.Error())
+		}
 
-	log.Println(token)
+		_, exists := response["error"]
+		if w.Code != http.StatusUnauthorized || !exists {
+			t.Errorf("status code: %d instead of %d", w.Code, http.StatusUnauthorized)
+			t.Errorf("response content: %s", w.Body.String())
+			return
+		}
+	})
+
+	token := getTokenForParticipant()
+	// log.Println(token)
+
 	// Test eagerly, when min age not reached yet
+	t.Run("Testing token too eagerly", func(t *testing.T) {
+		req, _ := http.NewRequest("GET", "/v1/token/renew", nil)
+		req.Header.Add("Authorization", "Bearer "+token)
+		w := performRequest(r, req)
+
+		// Convert the JSON response to a map
+		var response map[string]string
+		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
+			t.Errorf("error parsing response body: %s", err.Error())
+		}
+
+		_, exists := response["error"]
+		if w.Code != http.StatusTeapot || !exists {
+			t.Errorf("status code: %d instead of %d", w.Code, http.StatusTeapot)
+			t.Errorf("response content: %s", w.Body.String())
+			return
+		}
+	})
 
 	if testing.Short() {
 		t.Skip("skipping renew token test in short mode, since it has to wait for token expiration.")
 	}
 
-	// Test renew after min age reached - wait 3 seconds - with header
-	// Test renew after min age reached - wait 3 seconds - with url param
+	time.Sleep(minTokenAge)
 
-	// Test after expiration - wait 2 more seconds
+	// Test renew after min age reached - wait 2 seconds - with header
+	t.Run("Testing token with header param", func(t *testing.T) {
+		req, _ := http.NewRequest("GET", "/v1/token/renew", nil)
+		req.Header.Add("Authorization", "Bearer "+token)
+		w := performRequest(r, req)
+
+		// Convert the JSON response to a map
+		var response map[string]string
+		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
+			t.Errorf("error parsing response body: %s", err.Error())
+		}
+
+		_, exists := response["token"]
+		if w.Code != http.StatusOK || !exists {
+			t.Errorf("status code: %d instead of %d", w.Code, http.StatusOK)
+			t.Errorf("response content: %s", w.Body.String())
+			return
+		}
+	})
+
+	// Test renew after min age reached - wait 2 seconds - with url param
+	t.Run("Testing token with url param", func(t *testing.T) {
+		req, _ := http.NewRequest("GET", "/v1/token/renew?token="+token, nil)
+		w := performRequest(r, req)
+
+		// Convert the JSON response to a map
+		var response map[string]string
+		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
+			t.Errorf("error parsing response body: %s", err.Error())
+		}
+
+		_, exists := response["token"]
+		if w.Code != http.StatusOK || !exists {
+			t.Errorf("status code: %d instead of %d", w.Code, http.StatusOK)
+			t.Errorf("response content: %s", w.Body.String())
+			return
+		}
+	})
+
+	time.Sleep(tokenValidityPeriod)
+	// Test with expired token
+	t.Run("Testing with expired token", func(t *testing.T) {
+		req, _ := http.NewRequest("GET", "/v1/token/renew", nil)
+		req.Header.Add("Authorization", "Bearer "+token)
+		w := performRequest(r, req)
+
+		// Convert the JSON response to a map
+		var response map[string]string
+		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
+			t.Errorf("error parsing response body: %s", err.Error())
+		}
+
+		_, exists := response["error"]
+		if w.Code != http.StatusUnauthorized || !exists {
+			t.Errorf("status code: %d instead of %d", w.Code, http.StatusUnauthorized)
+			t.Errorf("response content: %s", w.Body.String())
+			return
+		}
+	})
 
 }
