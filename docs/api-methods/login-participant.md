@@ -33,6 +33,10 @@
     **Content:** `{ "error" : "<error message>" }` <br />
     **Typical reason:** Email or password wrong or doesn't belong to any registered participant.
 
+  * **Code:** 403 Forbidden <br />
+    **Content:** `{ "error" : "<error message>" }` <br />
+    **Typical reason:** The account does not meet the required authorization level.
+
   * **Code:** 500 Internal server error <br />
     **Content:** `{ "error" : "<error message>" }` <br />
     **Typical reason:** Something went wrong during the token generation. User's credentials are ok, but method failed generating a valid token, e.g. because signing key is not available.

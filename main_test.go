@@ -15,54 +15,64 @@ import (
 
 var ts *httptest.Server
 
-// Define mock data for testing user-management service
-var userList = []UserModel{
+// refactoring to role arrays and combining role dbs into one
+var userDB = []UserModel{
 	UserModel{
-		Email:    "test-p@test.com",
+		Email:    "test-p1@test.com",
 		Password: "testpassword", // is stored hashed on the real server
 		ID:       1,
+		Roles:    []string{"PARTICIPANT"},
 	},
 	UserModel{
-		Email:    "test-r@test.com",
+		Email:    "test-p2@test.com",
 		Password: "testpassword2", // is stored hashed on the real server
 		ID:       2,
+		Roles:    []string{"PARTICIPANT"},
 	},
 	UserModel{
-		Email:    "test-a@test.com",
+		Email:    "test-p3@test.com",
 		Password: "testpassword3", // is stored hashed on the real server
 		ID:       3,
+		Roles:    []string{"PARTICIPANT"},
 	},
-}
-
-var researcherList = []UserModel{
 	UserModel{
-		Email:    "test-r@test.com",
-		Password: "testpassword2", // is stored hashed on the real server
-		ID:       2,
+		Email:    "test-r1@test.com",
+		Password: "testpassword4", // is stored hashed on the real server
+		ID:       4,
+		Roles:    []string{"PARTICIPANT", "RESEARCHER"},
 	},
-}
-
-var adminList = []UserModel{
 	UserModel{
-		Email:    "test-a@test.com",
-		Password: "testpassword3", // is stored hashed on the real server
-		ID:       3,
+		Email:    "test-r2@test.com",
+		Password: "testpassword5", // is stored hashed on the real server
+		ID:       5,
+		Roles:    []string{"PARTICIPANT", "RESEARCHER"},
+	},
+	UserModel{
+		Email:    "test-a1@test.com",
+		Password: "testpassword6", // is stored hashed on the real server
+		ID:       6,
+		Roles:    []string{"PARTICIPANT", "RESEARCHER", "ADMIN"},
+	},
+	UserModel{
+		Email:    "test-a2@test.com",
+		Password: "testpassword7", // is stored hashed on the real server
+		ID:       7,
+		Roles:    []string{"PARTICIPANT", "RESEARCHER", "ADMIN"},
 	},
 }
 
-// MockLoginHandl is to emulate user-management's server response for login participant reuqests
-func MockLoginParticipantHandl(context *gin.Context) {
+// MockLoginHandl is to emulate user-management server response for login requests
+func MockLoginHandl(context *gin.Context) {
 	var creds userCredentials
 	if err := context.ShouldBindJSON(&creds); err != nil {
 		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Check if user with email address in the user list:
 	var currentUser UserModel
 	userFound := false
-	for _, v := range userList {
-		if v.Email == creds.Email {
+	for _, v := range userDB {
+		if v.Email == creds.Email && v.Password == creds.Password { // checking email and password right away instead of seperately?
 			currentUser = v
 			userFound = true
 			break
@@ -70,13 +80,7 @@ func MockLoginParticipantHandl(context *gin.Context) {
 	}
 
 	if !userFound {
-		context.JSON(http.StatusForbidden, gin.H{"error": "wrong email or password"})
-		return
-	}
-
-	// Check if password matches
-	if currentUser.Password != creds.Password {
-		context.JSON(http.StatusForbidden, gin.H{"error": "wrong email or password"})
+		context.JSON(http.StatusUnauthorized, gin.H{"error": "wrong email or password"})
 		return
 	}
 
@@ -89,8 +93,8 @@ func TestMain(m *testing.M) {
 	gin.SetMode(gin.TestMode)
 
 	r := gin.Default()
-	r.POST("/login-participant", MockLoginParticipantHandl)
-	ts = httptest.NewServer(r)
+	r.POST("/login", MockLoginHandl)
+	ts := httptest.NewServer(r)
 	defer ts.Close()
 
 	userManagementServer = ts.URL
@@ -110,24 +114,26 @@ func TestLoginParticipant(t *testing.T) {
 	r.POST("/v1/login/participant", loginParticipantHandl)
 
 	/********************************************/
-	/***** Check login with wrong email: *****/
+	/***** Check login without payload: *****/
 	/********************************************/
 	t.Run("Testing without payload", func(t *testing.T) {
-		req, _ := http.NewRequest("POST", "/v1/login/participant", nil)
-		w := performRequest(r, req)
+		t.Errorf("fix empty payload error")
+		return
+		// req, _ := http.NewRequest("POST", "/v1/login/participant", nil)
+		// w := performRequest(r, req)
 
-		// Convert the JSON response to a map
-		var response map[string]string
-		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
-			t.Errorf("error parsing response body: %s", err.Error())
-		}
+		// // Convert the JSON response to a map
+		// var response map[string]string
+		// if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
+		// 	t.Errorf("error parsing response body: %s", err.Error())
+		// }
 
-		value, exists := response["error"]
-		if w.Code != http.StatusBadRequest || !exists || value != "payload missing" {
-			t.Errorf("status code: %d", w.Code)
-			t.Errorf("response content: %s", w.Body.String())
-			return
-		}
+		// value, exists := response["error"]
+		// if w.Code != http.StatusBadRequest || !exists || value != "payload missing" {
+		// 	t.Errorf("status code: %d", w.Code)
+		// 	t.Errorf("response content: %s", w.Body.String())
+		// 	return
+		// }
 	})
 
 	/********************************************/
@@ -151,7 +157,7 @@ func TestLoginParticipant(t *testing.T) {
 		}
 
 		value, exists := response["error"]
-		if w.Code != http.StatusForbidden || !exists || value != "wrong email or password" {
+		if w.Code != http.StatusUnauthorized || !exists || value != "wrong email or password" {
 			t.Errorf("status code: %d", w.Code)
 			t.Errorf("response content: %s", w.Body.String())
 			return
@@ -163,7 +169,7 @@ func TestLoginParticipant(t *testing.T) {
 	/********************************************/
 	t.Run("Testing login with wrong password", func(t *testing.T) {
 		loginData := &userCredentials{
-			Email:    "test-p@test.com",
+			Email:    "test-p1@test.com",
 			Password: "testpasswor",
 		}
 		loginPayload, _ := json.Marshal(loginData)
@@ -179,7 +185,7 @@ func TestLoginParticipant(t *testing.T) {
 		}
 
 		value, exists := response["error"]
-		if w.Code != http.StatusForbidden || !exists || value != "wrong email or password" {
+		if w.Code != http.StatusUnauthorized || !exists || value != "wrong email or password" {
 			t.Errorf("status code: %d", w.Code)
 			t.Errorf("response content: %s", w.Body.String())
 			return
@@ -192,7 +198,7 @@ func TestLoginParticipant(t *testing.T) {
 	t.Run("Testing login with correct email and password", func(t *testing.T) {
 		t.Logf("Testing login with correct email and password")
 		loginData := &userCredentials{
-			Email:    "test-p@test.com",
+			Email:    "test-p1@test.com",
 			Password: "testpassword",
 		}
 		loginPayload, _ := json.Marshal(loginData)
@@ -244,17 +250,357 @@ func TestLoginParticipant(t *testing.T) {
 	})
 }
 
+func TestLoginResearcher(t *testing.T) {
+	r := gin.Default()
+	r.POST("/v1/login/researcher", loginResearcherHandl)
+
+	/********************************************/
+	/***** Check login with wrong email: *****/
+	/********************************************/
+	t.Run("Testing without payload", func(t *testing.T) {
+		t.Errorf("fix empty payload error")
+		return
+		// req, _ := http.NewRequest("POST", "/v1/login/researcher", nil)
+		// w := performRequest(r, req)
+
+		// // Convert the JSON response to a map
+		// var response map[string]string
+		// if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
+		// 	t.Errorf("error parsing response body: %s", err.Error())
+		// }
+
+		// value, exists := response["error"]
+		// if w.Code != http.StatusBadRequest || !exists || value != "payload missing" {
+		// 	t.Errorf("status code: %d", w.Code)
+		// 	t.Errorf("response content: %s", w.Body.String())
+		// 	return
+		// }
+	})
+
+	/********************************************/
+	/***** Check login with wrong email: *****/
+	/********************************************/
+	t.Run("Testing login with wrong email", func(t *testing.T) {
+		loginData := &userCredentials{
+			Email:    "test@test.com",
+			Password: "testpassword",
+		}
+		loginPayload, _ := json.Marshal(loginData)
+
+		req, _ := http.NewRequest("POST", "/v1/login/researcher", bytes.NewBuffer(loginPayload))
+		req.Header.Add("Content-Type", "application/json")
+		w := performRequest(r, req)
+
+		// Convert the JSON response to a map
+		var response map[string]string
+		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
+			t.Errorf("error parsing response body: %s", err.Error())
+		}
+
+		value, exists := response["error"]
+		if w.Code != http.StatusUnauthorized || !exists || value != "wrong email or password" {
+			t.Errorf("status code: %d", w.Code)
+			t.Errorf("response content: %s", w.Body.String())
+			return
+		}
+	})
+
+	/********************************************/
+	/***** Check login with wrong password: *****/
+	/********************************************/
+	t.Run("Testing login with wrong password", func(t *testing.T) {
+		loginData := &userCredentials{
+			Email:    "test-r1@test.com",
+			Password: "testpasswor",
+		}
+		loginPayload, _ := json.Marshal(loginData)
+
+		req, _ := http.NewRequest("POST", "/v1/login/researcher", bytes.NewBuffer(loginPayload))
+		req.Header.Add("Content-Type", "application/json")
+		w := performRequest(r, req)
+
+		// Convert the JSON response to a map
+		var response map[string]string
+		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
+			t.Errorf("error parsing response body: %s", err.Error())
+		}
+
+		value, exists := response["error"]
+		if w.Code != http.StatusUnauthorized || !exists || value != "wrong email or password" {
+			t.Errorf("status code: %d", w.Code)
+			t.Errorf("response content: %s", w.Body.String())
+			return
+		}
+	})
+
+	/********************************************/
+	/***** Check login with correct email and password as non researcher: ****/
+	/********************************************/
+	t.Run("Testing login with correct email and password as non researcher", func(t *testing.T) {
+		t.Logf("Testing login with correct email and password but as non researcher")
+		loginData := &userCredentials{
+			Email:    "test-p1@test.com",
+			Password: "testpassword",
+		}
+		loginPayload, _ := json.Marshal(loginData)
+
+		req, _ := http.NewRequest("POST", "/v1/login/researcher", bytes.NewBuffer(loginPayload))
+		req.Header.Add("Content-Type", "application/json")
+		w := performRequest(r, req)
+
+		// Convert the JSON response to a map
+		var response map[string]string
+		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
+			t.Errorf("error parsing response body: %s", err.Error())
+		}
+
+		value, exists := response["error"]
+		if w.Code != http.StatusForbidden || !exists || value != "required account authorization level not met" {
+			t.Errorf("status code: %d", w.Code)
+			t.Errorf("response content: %s", w.Body.String())
+			return
+		}
+	})
+
+	/********************************************/
+	/***** Check login with correct email and password as researcher: ****/
+	/********************************************/
+	t.Run("Testing login with correct email and password as researcher", func(t *testing.T) {
+		t.Logf("Testing login with correct email and password as researcher")
+		loginData := &userCredentials{
+			Email:    "test-r1@test.com",
+			Password: "testpassword4",
+		}
+		loginPayload, _ := json.Marshal(loginData)
+
+		req, _ := http.NewRequest("POST", "/v1/login/researcher", bytes.NewBuffer(loginPayload))
+		req.Header.Add("Content-Type", "application/json")
+		w := performRequest(r, req)
+
+		// Convert the JSON response to a map
+		var response map[string]string
+		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
+			t.Errorf("error parsing response body: %s", err.Error())
+		}
+
+		_, exists := response["token"]
+		if w.Code != http.StatusOK || !exists {
+			t.Errorf("status code: %d", w.Code)
+			t.Errorf("response content: %s", w.Body.String())
+			return
+		}
+	})
+
+	/********************************************/
+	/***** Check login with missing required fields: ****/
+	/********************************************/
+	t.Run("Testing login with missing required fields", func(t *testing.T) {
+		loginData := &userCredentials{
+			Email:    "",
+			Password: "",
+		}
+		loginPayload, _ := json.Marshal(loginData)
+
+		req, _ := http.NewRequest("POST", "/v1/login/researcher", bytes.NewBuffer(loginPayload))
+		req.Header.Add("Content-Type", "application/json")
+		w := performRequest(r, req)
+
+		// Convert the JSON response to a map
+		var response map[string]string
+		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
+			t.Errorf("error parsing response body: %s", err.Error())
+		}
+
+		_, exists := response["error"]
+		if w.Code != http.StatusBadRequest || !exists {
+			t.Errorf("status code: %d", w.Code)
+			t.Errorf("response content: %s", w.Body.String())
+			return
+		}
+	})
+}
+
+func TestLoginAdmin(t *testing.T) {
+	r := gin.Default()
+	r.POST("/v1/login/admin", loginAdminHandl)
+
+	/********************************************/
+	/***** Check login with wrong email: *****/
+	/********************************************/
+	t.Run("Testing without payload", func(t *testing.T) {
+		t.Errorf("fix empty payload error")
+		return
+		// req, _ := http.NewRequest("POST", "/v1/login/researcher", nil)
+		// w := performRequest(r, req)
+
+		// // Convert the JSON response to a map
+		// var response map[string]string
+		// if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
+		// 	t.Errorf("error parsing response body: %s", err.Error())
+		// }
+
+		// value, exists := response["error"]
+		// if w.Code != http.StatusBadRequest || !exists || value != "payload missing" {
+		// 	t.Errorf("status code: %d", w.Code)
+		// 	t.Errorf("response content: %s", w.Body.String())
+		// 	return
+		// }
+	})
+
+	/********************************************/
+	/***** Check login with wrong email: *****/
+	/********************************************/
+	t.Run("Testing login with wrong email", func(t *testing.T) {
+		loginData := &userCredentials{
+			Email:    "test@test.com",
+			Password: "testpassword",
+		}
+		loginPayload, _ := json.Marshal(loginData)
+
+		req, _ := http.NewRequest("POST", "/v1/login/admin", bytes.NewBuffer(loginPayload))
+		req.Header.Add("Content-Type", "application/json")
+		w := performRequest(r, req)
+
+		// Convert the JSON response to a map
+		var response map[string]string
+		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
+			t.Errorf("error parsing response body: %s", err.Error())
+		}
+
+		value, exists := response["error"]
+		if w.Code != http.StatusUnauthorized || !exists || value != "wrong email or password" {
+			t.Errorf("status code: %d", w.Code)
+			t.Errorf("response content: %s", w.Body.String())
+			return
+		}
+	})
+
+	/********************************************/
+	/***** Check login with wrong password: *****/
+	/********************************************/
+	t.Run("Testing login with wrong password", func(t *testing.T) {
+		loginData := &userCredentials{
+			Email:    "test-a1@test.com",
+			Password: "testpasswor",
+		}
+		loginPayload, _ := json.Marshal(loginData)
+
+		req, _ := http.NewRequest("POST", "/v1/login/admin", bytes.NewBuffer(loginPayload))
+		req.Header.Add("Content-Type", "application/json")
+		w := performRequest(r, req)
+
+		// Convert the JSON response to a map
+		var response map[string]string
+		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
+			t.Errorf("error parsing response body: %s", err.Error())
+		}
+
+		value, exists := response["error"]
+		if w.Code != http.StatusUnauthorized || !exists || value != "wrong email or password" {
+			t.Errorf("status code: %d", w.Code)
+			t.Errorf("response content: %s", w.Body.String())
+			return
+		}
+	})
+
+	/********************************************/
+	/***** Check login with correct email and password as non admin: ****/
+	/********************************************/
+	t.Run("Testing login with correct email and password as non admin", func(t *testing.T) {
+		t.Logf("Testing login with correct email and password but as non admin")
+		loginData := &userCredentials{
+			Email:    "test-r1@test.com",
+			Password: "testpassword4",
+		}
+		loginPayload, _ := json.Marshal(loginData)
+
+		req, _ := http.NewRequest("POST", "/v1/login/admin", bytes.NewBuffer(loginPayload))
+		req.Header.Add("Content-Type", "application/json")
+		w := performRequest(r, req)
+
+		// Convert the JSON response to a map
+		var response map[string]string
+		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
+			t.Errorf("error parsing response body: %s", err.Error())
+		}
+
+		value, exists := response["error"]
+		if w.Code != http.StatusForbidden || !exists || value != "required account authorization level not met" {
+			t.Errorf("status code: %d", w.Code)
+			t.Errorf("response content: %s", w.Body.String())
+			return
+		}
+	})
+
+	/********************************************/
+	/***** Check login with correct email and password as admin: ****/
+	/********************************************/
+	t.Run("Testing login with correct email and password as admin", func(t *testing.T) {
+		t.Logf("Testing login with correct email and password as admin")
+		loginData := &userCredentials{
+			Email:    "test-a1@test.com",
+			Password: "testpassword6",
+		}
+		loginPayload, _ := json.Marshal(loginData)
+
+		req, _ := http.NewRequest("POST", "/v1/login/admin", bytes.NewBuffer(loginPayload))
+		req.Header.Add("Content-Type", "application/json")
+		w := performRequest(r, req)
+
+		// Convert the JSON response to a map
+		var response map[string]string
+		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
+			t.Errorf("error parsing response body: %s", err.Error())
+		}
+
+		_, exists := response["token"]
+		if w.Code != http.StatusOK || !exists {
+			t.Errorf("status code: %d", w.Code)
+			t.Errorf("response content: %s", w.Body.String())
+			return
+		}
+	})
+
+	/********************************************/
+	/***** Check login with missing required fields: ****/
+	/********************************************/
+	t.Run("Testing login with missing required fields", func(t *testing.T) {
+		loginData := &userCredentials{
+			Email:    "",
+			Password: "",
+		}
+		loginPayload, _ := json.Marshal(loginData)
+
+		req, _ := http.NewRequest("POST", "/v1/login/admin", bytes.NewBuffer(loginPayload))
+		req.Header.Add("Content-Type", "application/json")
+		w := performRequest(r, req)
+
+		// Convert the JSON response to a map
+		var response map[string]string
+		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
+			t.Errorf("error parsing response body: %s", err.Error())
+		}
+
+		_, exists := response["error"]
+		if w.Code != http.StatusBadRequest || !exists {
+			t.Errorf("status code: %d", w.Code)
+			t.Errorf("response content: %s", w.Body.String())
+			return
+		}
+	})
+}
+
 func getTokenForParticipant() string {
 	r := gin.Default()
 	r.POST("/v1/login/participant", loginParticipantHandl)
 
 	loginData := &userCredentials{
-		Email:    "test-p@test.com",
+		Email:    "test-p1@test.com",
 		Password: "testpassword",
 	}
 	loginPayload, _ := json.Marshal(loginData)
 
-	req, _ := http.NewRequest("POST", "/v1/login/participant", bytes.NewBuffer(loginPayload))
+	req, _ := http.NewRequest("POST", "/v1/login/researcher", bytes.NewBuffer(loginPayload))
 	req.Header.Add("Content-Type", "application/json")
 	w := performRequest(r, req)
 

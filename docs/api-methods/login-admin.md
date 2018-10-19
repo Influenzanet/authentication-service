@@ -31,7 +31,11 @@
 
   * **Code:** 401 Unauthorized <br />
     **Content:** `{ "error" : "<error message>" }` <br />
-    **Typical reason:** Password is wrong or email doesn't belong to any registered admin.
+    **Typical reason:** Email or password wrong or doesn't belong to any registered participant.
+
+  * **Code:** 403 Forbidden <br />
+    **Content:** `{ "error" : "<error message>" }` <br />
+    **Typical reason:** The account does not meet the required authorization level.
 
   * **Code:** 500 Internal server error <br />
     **Content:** `{ "error" : "<error message>" }` <br />
