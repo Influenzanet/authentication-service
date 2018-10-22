@@ -117,23 +117,21 @@ func TestLoginParticipant(t *testing.T) {
 	/***** Check login without payload: *****/
 	/********************************************/
 	t.Run("Testing without payload", func(t *testing.T) {
-		t.Errorf("fix empty payload error")
-		return
-		// req, _ := http.NewRequest("POST", "/v1/login/participant", nil)
-		// w := performRequest(r, req)
+		req, _ := http.NewRequest("POST", "/v1/login/participant", nil)
+		w := performRequest(r, req)
 
-		// // Convert the JSON response to a map
-		// var response map[string]string
-		// if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
-		// 	t.Errorf("error parsing response body: %s", err.Error())
-		// }
+		// Convert the JSON response to a map
+		var response map[string]string
+		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
+			t.Errorf("error parsing response body: %s", err.Error())
+		}
 
-		// value, exists := response["error"]
-		// if w.Code != http.StatusBadRequest || !exists || value != "payload missing" {
-		// 	t.Errorf("status code: %d", w.Code)
-		// 	t.Errorf("response content: %s", w.Body.String())
-		// 	return
-		// }
+		value, exists := response["error"]
+		if w.Code != http.StatusBadRequest || !exists || value != "payload missing" {
+			t.Errorf("status code: %d", w.Code)
+			t.Errorf("response content: %s", w.Body.String())
+			return
+		}
 	})
 
 	/********************************************/
@@ -258,23 +256,21 @@ func TestLoginResearcher(t *testing.T) {
 	/***** Check login with wrong email: *****/
 	/********************************************/
 	t.Run("Testing without payload", func(t *testing.T) {
-		t.Errorf("fix empty payload error")
-		return
-		// req, _ := http.NewRequest("POST", "/v1/login/researcher", nil)
-		// w := performRequest(r, req)
+		req, _ := http.NewRequest("POST", "/v1/login/researcher", nil)
+		w := performRequest(r, req)
 
-		// // Convert the JSON response to a map
-		// var response map[string]string
-		// if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
-		// 	t.Errorf("error parsing response body: %s", err.Error())
-		// }
+		// Convert the JSON response to a map
+		var response map[string]string
+		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
+			t.Errorf("error parsing response body: %s", err.Error())
+		}
 
-		// value, exists := response["error"]
-		// if w.Code != http.StatusBadRequest || !exists || value != "payload missing" {
-		// 	t.Errorf("status code: %d", w.Code)
-		// 	t.Errorf("response content: %s", w.Body.String())
-		// 	return
-		// }
+		value, exists := response["error"]
+		if w.Code != http.StatusBadRequest || !exists || value != "payload missing" {
+			t.Errorf("status code: %d", w.Code)
+			t.Errorf("response content: %s", w.Body.String())
+			return
+		}
 	})
 
 	/********************************************/
@@ -428,23 +424,21 @@ func TestLoginAdmin(t *testing.T) {
 	/***** Check login with wrong email: *****/
 	/********************************************/
 	t.Run("Testing without payload", func(t *testing.T) {
-		t.Errorf("fix empty payload error")
-		return
-		// req, _ := http.NewRequest("POST", "/v1/login/researcher", nil)
-		// w := performRequest(r, req)
+		req, _ := http.NewRequest("POST", "/v1/login/admin", nil)
+		w := performRequest(r, req)
 
-		// // Convert the JSON response to a map
-		// var response map[string]string
-		// if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
-		// 	t.Errorf("error parsing response body: %s", err.Error())
-		// }
+		// Convert the JSON response to a map
+		var response map[string]string
+		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
+			t.Errorf("error parsing response body: %s", err.Error())
+		}
 
-		// value, exists := response["error"]
-		// if w.Code != http.StatusBadRequest || !exists || value != "payload missing" {
-		// 	t.Errorf("status code: %d", w.Code)
-		// 	t.Errorf("response content: %s", w.Body.String())
-		// 	return
-		// }
+		value, exists := response["error"]
+		if w.Code != http.StatusBadRequest || !exists || value != "payload missing" {
+			t.Errorf("status code: %d", w.Code)
+			t.Errorf("response content: %s", w.Body.String())
+			return
+		}
 	})
 
 	/********************************************/
