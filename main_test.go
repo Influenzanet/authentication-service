@@ -84,7 +84,21 @@ func MockLoginHandl(context *gin.Context) {
 		return
 	}
 
-	context.JSON(http.StatusOK, currentUser)
+	if creds.Role == "" {
+		creds.Role = "PARTICIPANT"
+	}
+
+	if !currentUser.HasRole(creds.Role) {
+		context.JSON(http.StatusForbidden, gin.H{"error": "missing appropriate role"})
+		return
+	}
+
+	responseData := &UserLoginResponse{
+		ID:   currentUser.ID,
+		Role: creds.Role,
+	}
+
+	context.JSON(http.StatusOK, responseData)
 }
 
 // This function is used for setup before executing the test functions
@@ -111,13 +125,15 @@ func performRequest(r http.Handler, req *http.Request) *httptest.ResponseRecorde
 
 func TestLoginParticipant(t *testing.T) {
 	r := gin.Default()
-	r.POST("/v1/login/participant", loginParticipantHandl)
+	r.POST("/v1/user/login", loginHandl)
+
+	const testingRole = "PARTICIPANT"
 
 	/********************************************/
 	/***** Check login without payload: *****/
 	/********************************************/
 	t.Run("Testing without payload", func(t *testing.T) {
-		req, _ := http.NewRequest("POST", "/v1/login/participant", nil)
+		req, _ := http.NewRequest("POST", "/v1/user/login", nil)
 		w := performRequest(r, req)
 
 		// Convert the JSON response to a map
@@ -144,7 +160,7 @@ func TestLoginParticipant(t *testing.T) {
 		}
 		loginPayload, _ := json.Marshal(loginData)
 
-		req, _ := http.NewRequest("POST", "/v1/login/participant", bytes.NewBuffer(loginPayload))
+		req, _ := http.NewRequest("POST", "/v1/user/login", bytes.NewBuffer(loginPayload))
 		req.Header.Add("Content-Type", "application/json")
 		w := performRequest(r, req)
 
@@ -172,7 +188,7 @@ func TestLoginParticipant(t *testing.T) {
 		}
 		loginPayload, _ := json.Marshal(loginData)
 
-		req, _ := http.NewRequest("POST", "/v1/login/participant", bytes.NewBuffer(loginPayload))
+		req, _ := http.NewRequest("POST", "/v1/user/login", bytes.NewBuffer(loginPayload))
 		req.Header.Add("Content-Type", "application/json")
 		w := performRequest(r, req)
 
@@ -191,17 +207,17 @@ func TestLoginParticipant(t *testing.T) {
 	})
 
 	/********************************************/
-	/***** Check login with correct email and password: ****/
+	/***** Check login with correct email and password without role: ****/
 	/********************************************/
-	t.Run("Testing login with correct email and password", func(t *testing.T) {
-		t.Logf("Testing login with correct email and password")
+	t.Run("Testing login with correct email and password without role", func(t *testing.T) {
+		t.Logf("Testing login with correct email and password without role")
 		loginData := &userCredentials{
 			Email:    "test-p1@test.com",
 			Password: "testpassword",
 		}
 		loginPayload, _ := json.Marshal(loginData)
 
-		req, _ := http.NewRequest("POST", "/v1/login/participant", bytes.NewBuffer(loginPayload))
+		req, _ := http.NewRequest("POST", "/v1/user/login", bytes.NewBuffer(loginPayload))
 		req.Header.Add("Content-Type", "application/json")
 		w := performRequest(r, req)
 
@@ -211,8 +227,40 @@ func TestLoginParticipant(t *testing.T) {
 			t.Errorf("error parsing response body: %s", err.Error())
 		}
 
-		_, exists := response["token"]
-		if w.Code != http.StatusOK || !exists {
+		_, tokenExists := response["token"]
+		roleValue, roleExists := response["role"]
+		if w.Code != http.StatusOK || !tokenExists || !roleExists || roleValue != testingRole {
+			t.Errorf("status code: %d", w.Code)
+			t.Errorf("response content: %s", w.Body.String())
+			return
+		}
+	})
+
+	/********************************************/
+	/***** Check login with correct email and password with role: ****/
+	/********************************************/
+	t.Run("Testing login with correct email and password with role", func(t *testing.T) {
+		t.Logf("Testing login with correct email and password with role")
+		loginData := &userCredentials{
+			Email:    "test-p1@test.com",
+			Password: "testpassword",
+			Role:     "PARTICIPANT",
+		}
+		loginPayload, _ := json.Marshal(loginData)
+
+		req, _ := http.NewRequest("POST", "/v1/user/login", bytes.NewBuffer(loginPayload))
+		req.Header.Add("Content-Type", "application/json")
+		w := performRequest(r, req)
+
+		// Convert the JSON response to a map
+		var response map[string]string
+		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
+			t.Errorf("error parsing response body: %s", err.Error())
+		}
+
+		_, tokenExists := response["token"]
+		roleValue, roleExists := response["role"]
+		if w.Code != http.StatusOK || !tokenExists || !roleExists || roleValue != testingRole {
 			t.Errorf("status code: %d", w.Code)
 			t.Errorf("response content: %s", w.Body.String())
 			return
@@ -229,7 +277,7 @@ func TestLoginParticipant(t *testing.T) {
 		}
 		loginPayload, _ := json.Marshal(loginData)
 
-		req, _ := http.NewRequest("POST", "/v1/login/participant", bytes.NewBuffer(loginPayload))
+		req, _ := http.NewRequest("POST", "/v1/user/login", bytes.NewBuffer(loginPayload))
 		req.Header.Add("Content-Type", "application/json")
 		w := performRequest(r, req)
 
@@ -250,13 +298,15 @@ func TestLoginParticipant(t *testing.T) {
 
 func TestLoginResearcher(t *testing.T) {
 	r := gin.Default()
-	r.POST("/v1/login/researcher", loginResearcherHandl)
+	r.POST("/v1/user/login", loginHandl)
+
+	const testingRole = "RESEARCHER"
 
 	/********************************************/
 	/***** Check login with wrong email: *****/
 	/********************************************/
 	t.Run("Testing without payload", func(t *testing.T) {
-		req, _ := http.NewRequest("POST", "/v1/login/researcher", nil)
+		req, _ := http.NewRequest("POST", "/v1/user/login", nil)
 		w := performRequest(r, req)
 
 		// Convert the JSON response to a map
@@ -283,7 +333,7 @@ func TestLoginResearcher(t *testing.T) {
 		}
 		loginPayload, _ := json.Marshal(loginData)
 
-		req, _ := http.NewRequest("POST", "/v1/login/researcher", bytes.NewBuffer(loginPayload))
+		req, _ := http.NewRequest("POST", "/v1/user/login", bytes.NewBuffer(loginPayload))
 		req.Header.Add("Content-Type", "application/json")
 		w := performRequest(r, req)
 
@@ -311,7 +361,7 @@ func TestLoginResearcher(t *testing.T) {
 		}
 		loginPayload, _ := json.Marshal(loginData)
 
-		req, _ := http.NewRequest("POST", "/v1/login/researcher", bytes.NewBuffer(loginPayload))
+		req, _ := http.NewRequest("POST", "/v1/user/login", bytes.NewBuffer(loginPayload))
 		req.Header.Add("Content-Type", "application/json")
 		w := performRequest(r, req)
 
@@ -337,10 +387,11 @@ func TestLoginResearcher(t *testing.T) {
 		loginData := &userCredentials{
 			Email:    "test-p1@test.com",
 			Password: "testpassword",
+			Role:     "RESEARCHER",
 		}
 		loginPayload, _ := json.Marshal(loginData)
 
-		req, _ := http.NewRequest("POST", "/v1/login/researcher", bytes.NewBuffer(loginPayload))
+		req, _ := http.NewRequest("POST", "/v1/user/login", bytes.NewBuffer(loginPayload))
 		req.Header.Add("Content-Type", "application/json")
 		w := performRequest(r, req)
 
@@ -351,7 +402,7 @@ func TestLoginResearcher(t *testing.T) {
 		}
 
 		value, exists := response["error"]
-		if w.Code != http.StatusForbidden || !exists || value != "required account authorization level not met" {
+		if w.Code != http.StatusForbidden || !exists || value != "missing appropriate role" {
 			t.Errorf("status code: %d", w.Code)
 			t.Errorf("response content: %s", w.Body.String())
 			return
@@ -366,10 +417,11 @@ func TestLoginResearcher(t *testing.T) {
 		loginData := &userCredentials{
 			Email:    "test-r1@test.com",
 			Password: "testpassword4",
+			Role:     "RESEARCHER",
 		}
 		loginPayload, _ := json.Marshal(loginData)
 
-		req, _ := http.NewRequest("POST", "/v1/login/researcher", bytes.NewBuffer(loginPayload))
+		req, _ := http.NewRequest("POST", "/v1/user/login", bytes.NewBuffer(loginPayload))
 		req.Header.Add("Content-Type", "application/json")
 		w := performRequest(r, req)
 
@@ -379,8 +431,9 @@ func TestLoginResearcher(t *testing.T) {
 			t.Errorf("error parsing response body: %s", err.Error())
 		}
 
-		_, exists := response["token"]
-		if w.Code != http.StatusOK || !exists {
+		_, tokenExists := response["token"]
+		roleValue, roleExists := response["role"]
+		if w.Code != http.StatusOK || !tokenExists || !roleExists || roleValue != testingRole {
 			t.Errorf("status code: %d", w.Code)
 			t.Errorf("response content: %s", w.Body.String())
 			return
@@ -397,7 +450,7 @@ func TestLoginResearcher(t *testing.T) {
 		}
 		loginPayload, _ := json.Marshal(loginData)
 
-		req, _ := http.NewRequest("POST", "/v1/login/researcher", bytes.NewBuffer(loginPayload))
+		req, _ := http.NewRequest("POST", "/v1/user/login", bytes.NewBuffer(loginPayload))
 		req.Header.Add("Content-Type", "application/json")
 		w := performRequest(r, req)
 
@@ -418,13 +471,15 @@ func TestLoginResearcher(t *testing.T) {
 
 func TestLoginAdmin(t *testing.T) {
 	r := gin.Default()
-	r.POST("/v1/login/admin", loginAdminHandl)
+	r.POST("/v1/user/login", loginHandl)
+
+	const testingRole = "ADMIN"
 
 	/********************************************/
 	/***** Check login with wrong email: *****/
 	/********************************************/
 	t.Run("Testing without payload", func(t *testing.T) {
-		req, _ := http.NewRequest("POST", "/v1/login/admin", nil)
+		req, _ := http.NewRequest("POST", "/v1/user/login", nil)
 		w := performRequest(r, req)
 
 		// Convert the JSON response to a map
@@ -451,7 +506,7 @@ func TestLoginAdmin(t *testing.T) {
 		}
 		loginPayload, _ := json.Marshal(loginData)
 
-		req, _ := http.NewRequest("POST", "/v1/login/admin", bytes.NewBuffer(loginPayload))
+		req, _ := http.NewRequest("POST", "/v1/user/login", bytes.NewBuffer(loginPayload))
 		req.Header.Add("Content-Type", "application/json")
 		w := performRequest(r, req)
 
@@ -479,7 +534,7 @@ func TestLoginAdmin(t *testing.T) {
 		}
 		loginPayload, _ := json.Marshal(loginData)
 
-		req, _ := http.NewRequest("POST", "/v1/login/admin", bytes.NewBuffer(loginPayload))
+		req, _ := http.NewRequest("POST", "/v1/user/login", bytes.NewBuffer(loginPayload))
 		req.Header.Add("Content-Type", "application/json")
 		w := performRequest(r, req)
 
@@ -505,10 +560,11 @@ func TestLoginAdmin(t *testing.T) {
 		loginData := &userCredentials{
 			Email:    "test-r1@test.com",
 			Password: "testpassword4",
+			Role:     "ADMIN",
 		}
 		loginPayload, _ := json.Marshal(loginData)
 
-		req, _ := http.NewRequest("POST", "/v1/login/admin", bytes.NewBuffer(loginPayload))
+		req, _ := http.NewRequest("POST", "/v1/user/login", bytes.NewBuffer(loginPayload))
 		req.Header.Add("Content-Type", "application/json")
 		w := performRequest(r, req)
 
@@ -519,7 +575,7 @@ func TestLoginAdmin(t *testing.T) {
 		}
 
 		value, exists := response["error"]
-		if w.Code != http.StatusForbidden || !exists || value != "required account authorization level not met" {
+		if w.Code != http.StatusForbidden || !exists || value != "missing appropriate role" {
 			t.Errorf("status code: %d", w.Code)
 			t.Errorf("response content: %s", w.Body.String())
 			return
@@ -534,10 +590,11 @@ func TestLoginAdmin(t *testing.T) {
 		loginData := &userCredentials{
 			Email:    "test-a1@test.com",
 			Password: "testpassword6",
+			Role:     "ADMIN",
 		}
 		loginPayload, _ := json.Marshal(loginData)
 
-		req, _ := http.NewRequest("POST", "/v1/login/admin", bytes.NewBuffer(loginPayload))
+		req, _ := http.NewRequest("POST", "/v1/user/login", bytes.NewBuffer(loginPayload))
 		req.Header.Add("Content-Type", "application/json")
 		w := performRequest(r, req)
 
@@ -547,8 +604,9 @@ func TestLoginAdmin(t *testing.T) {
 			t.Errorf("error parsing response body: %s", err.Error())
 		}
 
-		_, exists := response["token"]
-		if w.Code != http.StatusOK || !exists {
+		_, tokenExists := response["token"]
+		roleValue, roleExists := response["role"]
+		if w.Code != http.StatusOK || !tokenExists || !roleExists || roleValue != testingRole {
 			t.Errorf("status code: %d", w.Code)
 			t.Errorf("response content: %s", w.Body.String())
 			return
@@ -565,7 +623,7 @@ func TestLoginAdmin(t *testing.T) {
 		}
 		loginPayload, _ := json.Marshal(loginData)
 
-		req, _ := http.NewRequest("POST", "/v1/login/admin", bytes.NewBuffer(loginPayload))
+		req, _ := http.NewRequest("POST", "/v1/user/login", bytes.NewBuffer(loginPayload))
 		req.Header.Add("Content-Type", "application/json")
 		w := performRequest(r, req)
 
@@ -586,7 +644,7 @@ func TestLoginAdmin(t *testing.T) {
 
 func getTokenForParticipant() string {
 	r := gin.Default()
-	r.POST("/v1/login/participant", loginParticipantHandl)
+	r.POST("/v1/user/login", loginHandl)
 
 	loginData := &userCredentials{
 		Email:    "test-p1@test.com",
@@ -594,7 +652,7 @@ func getTokenForParticipant() string {
 	}
 	loginPayload, _ := json.Marshal(loginData)
 
-	req, _ := http.NewRequest("POST", "/v1/login/researcher", bytes.NewBuffer(loginPayload))
+	req, _ := http.NewRequest("POST", "/v1/user/login", bytes.NewBuffer(loginPayload))
 	req.Header.Add("Content-Type", "application/json")
 	w := performRequest(r, req)
 

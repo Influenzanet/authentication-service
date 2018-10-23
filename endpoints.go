@@ -15,6 +15,7 @@ import (
 type userCredentials struct {
 	Email    string `json:"email" binding:"required"`
 	Password string `json:"password" binding:"required"`
+	Role     string `json:"role"`
 }
 
 // UserModel holds information relevant for authentication
@@ -22,7 +23,23 @@ type UserModel struct {
 	Email    string   `json:"email"`
 	Password string   `json:"password"`
 	ID       uint     `json:"user_id"`
-	Roles    []string `json:"roles"` // PARTICIPANT RESEARCHER ADMIN
+	Roles    []string `json:"roles"`
+}
+
+// HasRole checks whether the user has a specified role
+func (u UserModel) HasRole(role string) bool {
+	for _, v := range u.Roles {
+		if v == role {
+			return true
+		}
+	}
+	return false
+}
+
+// UserLoginResponse holds id and role the user is authenticated for
+type UserLoginResponse struct {
+	ID   uint   `json:"user_id"`
+	Role string `json:"role"`
 }
 
 type errorResponse struct {
@@ -31,24 +48,24 @@ type errorResponse struct {
 
 type tokenMessage struct {
 	Token string `json:"token"`
+	Role  string `json:"role"`
 }
 
 func checkTokenAgeMaturity(issuedAt int64) bool {
 	return time.Now().Unix() < time.Unix(issuedAt, 0).Add(minTokenAge).Unix()
 }
 
-func loginParticipantHandl(context *gin.Context) {
-	var requiredAuthLevel = "PARTICIPANT"
+func loginHandl(context *gin.Context) {
 	var creds userCredentials
+
 	if err := context.ShouldBindJSON(&creds); err != nil {
 		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	loginPayload, err := json.Marshal(creds)
+	payload, err := json.Marshal(creds)
 
-	// reach out to user-management service to check credentials
-	resp, err := http.Post(userManagementServer+"/login", "application/json", bytes.NewBuffer(loginPayload))
+	resp, err := http.Post(userManagementServer+"/login", "application/json", bytes.NewBuffer(payload))
 	if err != nil {
 		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -67,19 +84,14 @@ func loginParticipantHandl(context *gin.Context) {
 	}
 
 	respBody, err := ioutil.ReadAll(resp.Body)
-	currentUser := UserModel{}
+	currentUser := UserLoginResponse{}
 	jsonErr := json.Unmarshal(respBody, &currentUser)
 	if jsonErr != nil {
 		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	// generate token
-	if len(currentUser.Roles) < 1 || currentUser.Roles[0] != requiredAuthLevel { // TODO implement contains method to check for the required role instead of hardcoding
-		context.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "required account authorization level not met"})
-		return
-	}
-	token, err := generateNewToken(currentUser.ID, []string{"PARTICIPANT"})
+	token, err := generateNewToken(currentUser.ID, currentUser.Role)
 	if err != nil {
 		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -88,118 +100,7 @@ func loginParticipantHandl(context *gin.Context) {
 	// Send response
 	tokenResp := tokenMessage{
 		Token: token,
-	}
-	context.JSON(http.StatusOK, tokenResp)
-}
-
-func loginResearcherHandl(context *gin.Context) {
-	var requiredAuthLevel = "RESEARCHER"
-	var creds userCredentials
-	if err := context.ShouldBindJSON(&creds); err != nil {
-		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	loginPayload, err := json.Marshal(creds)
-
-	// reach out to user-management service to check credentials
-	resp, err := http.Post(userManagementServer+"/login", "application/json", bytes.NewBuffer(loginPayload))
-	if err != nil {
-		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		respBody, err := ioutil.ReadAll(resp.Body)
-		currentError := errorResponse{}
-		jsonErr := json.Unmarshal(respBody, &currentError)
-		if jsonErr != nil {
-			context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-		context.JSON(resp.StatusCode, currentError)
-		return
-
-	}
-
-	respBody, err := ioutil.ReadAll(resp.Body)
-	currentUser := UserModel{}
-	jsonErr := json.Unmarshal(respBody, &currentUser)
-	if jsonErr != nil {
-		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	// generate token
-	if len(currentUser.Roles) < 2 || currentUser.Roles[1] != requiredAuthLevel { // TODO implement contains method to check for the required role instead of hardcoding
-		context.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "required account authorization level not met"})
-		return
-	}
-	token, err := generateNewToken(currentUser.ID, []string{"PARTICIPANT", "RESEARCHER"})
-	if err != nil {
-		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	// Send response
-	tokenResp := tokenMessage{
-		Token: token,
-	}
-	context.JSON(http.StatusOK, tokenResp)
-}
-
-func loginAdminHandl(context *gin.Context) {
-	var requiredAuthLevel = "ADMIN"
-	var creds userCredentials
-	if err := context.ShouldBindJSON(&creds); err != nil {
-		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	loginPayload, err := json.Marshal(creds)
-
-	// reach out to user-management service to check credentials
-	resp, err := http.Post(userManagementServer+"/login", "application/json", bytes.NewBuffer(loginPayload))
-	if err != nil {
-		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		respBody, err := ioutil.ReadAll(resp.Body)
-		currentError := errorResponse{}
-		jsonErr := json.Unmarshal(respBody, &currentError)
-		if jsonErr != nil {
-			context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-		context.JSON(resp.StatusCode, currentError)
-		return
-
-	}
-
-	respBody, err := ioutil.ReadAll(resp.Body)
-	currentUser := UserModel{}
-	jsonErr := json.Unmarshal(respBody, &currentUser)
-	if jsonErr != nil {
-		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	// generate tokens
-	if len(currentUser.Roles) < 3 || currentUser.Roles[2] != requiredAuthLevel { // TODO implement contains method to check for the required role instead of hardcoding
-		context.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "required account authorization level not met"})
-		return
-	}
-	token, err := generateNewToken(currentUser.ID, []string{"PARTICIPANT", "RESEARCHER", "ADMIN"})
-	if err != nil {
-		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	// Send response
-	tokenResp := tokenMessage{
-		Token: token,
+		Role:  currentUser.Role,
 	}
 	context.JSON(http.StatusOK, tokenResp)
 }
@@ -286,7 +187,7 @@ func renewTokenHandl(context *gin.Context) {
 	}
 
 	// Generate new token:
-	newToken, err := generateNewToken(parsedToken.UserID, parsedToken.Roles)
+	newToken, err := generateNewToken(parsedToken.UserID, parsedToken.Role)
 	if err != nil {
 		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
