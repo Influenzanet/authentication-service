@@ -16,12 +16,12 @@
 * **Data Params**
   **Required:**
   * **Type:** application/json <br />
-    **Content:** `{ "email": "<user email>", "password": "<user password>"}`
+    **Content:** `{ "email": "<user email>", "password": "<user password>", "role": "RESEARCHER" }`
 
 * **Success Response:**
 
   * **Code:** 200 <br />
-    **Content:** `{ "token": "<token string>" }`
+    **Content:** `{ "token": "<token string>", "role": "RESEARCHER" }`
 
 * **Error Response:**
 
