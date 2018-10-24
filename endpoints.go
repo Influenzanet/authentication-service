@@ -15,12 +15,31 @@ import (
 type userCredentials struct {
 	Email    string `json:"email" binding:"required"`
 	Password string `json:"password" binding:"required"`
+	Role     string `json:"role"`
 }
 
-type userModel struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-	ID       uint   `json:"user_id"`
+// UserModel holds information relevant for authentication
+type UserModel struct {
+	Email    string   `json:"email"`
+	Password string   `json:"password"`
+	ID       uint     `json:"user_id"`
+	Roles    []string `json:"roles"`
+}
+
+// HasRole checks whether the user has a specified role
+func (u UserModel) HasRole(role string) bool {
+	for _, v := range u.Roles {
+		if v == role {
+			return true
+		}
+	}
+	return false
+}
+
+// UserLoginResponse holds id and role the user is authenticated for
+type UserLoginResponse struct {
+	ID   uint   `json:"user_id"`
+	Role string `json:"role"`
 }
 
 type errorResponse struct {
@@ -29,23 +48,24 @@ type errorResponse struct {
 
 type tokenMessage struct {
 	Token string `json:"token"`
+	Role  string `json:"role"`
 }
 
 func checkTokenAgeMaturity(issuedAt int64) bool {
 	return time.Now().Unix() < time.Unix(issuedAt, 0).Add(minTokenAge).Unix()
 }
 
-func loginParticipantHandl(context *gin.Context) {
+func loginHandl(context *gin.Context) {
 	var creds userCredentials
+
 	if err := context.ShouldBindJSON(&creds); err != nil {
 		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	loginPayload, err := json.Marshal(creds)
+	payload, err := json.Marshal(creds)
 
-	// reach out to user-management service to check credentials
-	resp, err := http.Post(userManagementServer+"/login-participant", "application/json", bytes.NewBuffer(loginPayload))
+	resp, err := http.Post(userManagementServer+"/login", "application/json", bytes.NewBuffer(payload))
 	if err != nil {
 		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -61,19 +81,17 @@ func loginParticipantHandl(context *gin.Context) {
 		}
 		context.JSON(resp.StatusCode, currentError)
 		return
-
 	}
 
 	respBody, err := ioutil.ReadAll(resp.Body)
-	currentUser := userModel{}
+	currentUser := UserLoginResponse{}
 	jsonErr := json.Unmarshal(respBody, &currentUser)
 	if jsonErr != nil {
 		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	// generate token
-	token, err := generateNewToken(currentUser.ID, "participant")
+	token, err := generateNewToken(currentUser.ID, currentUser.Role)
 	if err != nil {
 		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -82,16 +100,9 @@ func loginParticipantHandl(context *gin.Context) {
 	// Send response
 	tokenResp := tokenMessage{
 		Token: token,
+		Role:  currentUser.Role,
 	}
 	context.JSON(http.StatusOK, tokenResp)
-}
-
-func loginResearcherHandl(context *gin.Context) {
-	context.JSON(http.StatusNotImplemented, gin.H{"error": "not implemented"})
-}
-
-func loginAdminHandl(context *gin.Context) {
-	context.JSON(http.StatusNotImplemented, gin.H{"error": "not implemented"})
 }
 
 func signupParticipantHandl(context *gin.Context) {
@@ -147,6 +158,10 @@ func renewTokenHandl(context *gin.Context) {
 	if ok && len(tokens) >= 1 {
 		token = tokens[0]
 		token = strings.TrimPrefix(token, "Bearer ")
+		if len(token) == 0 {
+			context.JSON(http.StatusBadRequest, gin.H{"error": "no Authorization token found"})
+			return
+		}
 	} else if len(req.FormValue("token")) > 0 {
 		token = req.FormValue("token")
 	} else {

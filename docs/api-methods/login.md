@@ -1,27 +1,26 @@
-**Login Participant**
+**Login**
 ----
-  Check email and password for a participant and return a token if credentials are correct.
+  Check email and password for a user, check if the user has the required role, and return a token if credentials are correct.
 
 * **URL**
 
-  /v1/login/participant
+  /v1/user/login
 
 * **Method:**
 
   `POST`
 
-*  **URL Params**
-  None
+*  **URL Params:**
+   * None
 
-* **Data Params**
-  **Required:**
+* **Data Params:**
   * **Type:** application/json <br />
-    **Content:** `{ "email": "<user email>", "password": "<user password>"}`
+    **Content:** `{ "email": "<user email>", "password": "<user password>", "?role": "PARTICIPANT" | "RESEARCHER" | "ADMIN" }`
 
 * **Success Response:**
 
   * **Code:** 200 <br />
-    **Content:** `{ "token": "<token string>" }`
+    **Content:** `{ "token": "<token string>", "role": "PARTICIPANT" | "RESEARCHER" | "ADMIN" }`
 
 * **Error Response:**
 
@@ -33,12 +32,16 @@
     **Content:** `{ "error" : "<error message>" }` <br />
     **Typical reason:** Email or password wrong or doesn't belong to any registered participant.
 
+  * **Code:** 403 Forbidden <br />
+    **Content:** `{ "error" : "<error message>" }` <br />
+    **Typical reason:** The account does not have the role for which authorization was requested.
+
   * **Code:** 500 Internal server error <br />
     **Content:** `{ "error" : "<error message>" }` <br />
     **Typical reason:** Something went wrong during the token generation. User's credentials are ok, but method failed generating a valid token, e.g. because signing key is not available.
 
 * **Sample Call:**
-  TODO: add sample call for go
+  * TODO: add sample call for go
 
   ```javascript
     $.ajax({
@@ -52,4 +55,4 @@
   ```
 
 * **Notes:**
-  None
+  * If not specified `role` defaults to `"PARTICIPANT"`.
