@@ -34,7 +34,7 @@
     **Typical reason:** Missing current token from request's header or as url param.
 
   * **Code:** 401 Unauthorized <br />
-    **Content:** `{ "error" : "<error message>" }` <br />
+    **Content:** `{ "error" : "<error message>",  "reason": <reason message> }` <br />
     **Typical reason:** Current token is not valid (e.g. wrong or expired).
 
   * **Code:** 418 I'm a tea pot <br />

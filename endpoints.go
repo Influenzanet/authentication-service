@@ -176,11 +176,11 @@ func renewTokenHandl(context *gin.Context) {
 	// Parse and validate token
 	parsedToken, ok, _, err := validateToken(token)
 	if err != nil {
-		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		context.JSON(http.StatusUnauthorized, gin.H{"error": "token not valid", "reason": err.Error()})
 		return
 	}
 	if !ok {
-		context.JSON(http.StatusUnauthorized, gin.H{"error": "token not valid"})
+		context.JSON(http.StatusUnauthorized, gin.H{"error": "token not valid", "reason": "wrong signiture"})
 		return
 	}
 
