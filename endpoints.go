@@ -57,6 +57,10 @@ func checkTokenAgeMaturity(issuedAt int64) bool {
 
 func loginHandl(context *gin.Context) {
 	var creds userCredentials
+	if context.Request.ContentLength == 0 {
+		context.JSON(http.StatusBadRequest, gin.H{"error": "payload missing"})
+		return
+	}
 
 	if err := context.ShouldBindJSON(&creds); err != nil {
 		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -172,11 +176,11 @@ func renewTokenHandl(context *gin.Context) {
 	// Parse and validate token
 	parsedToken, ok, _, err := validateToken(token)
 	if err != nil {
-		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		context.JSON(http.StatusUnauthorized, gin.H{"error": "token not valid", "reason": err.Error()})
 		return
 	}
 	if !ok {
-		context.JSON(http.StatusUnauthorized, gin.H{"error": "token not valid"})
+		context.JSON(http.StatusUnauthorized, gin.H{"error": "token not valid", "reason": "wrong signiture"})
 		return
 	}
 
