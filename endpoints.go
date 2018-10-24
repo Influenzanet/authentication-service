@@ -57,6 +57,10 @@ func checkTokenAgeMaturity(issuedAt int64) bool {
 
 func loginHandl(context *gin.Context) {
 	var creds userCredentials
+	if context.Request.ContentLength == 0 {
+		context.JSON(http.StatusBadRequest, gin.H{"error": "payload missing"})
+		return
+	}
 
 	if err := context.ShouldBindJSON(&creds); err != nil {
 		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
