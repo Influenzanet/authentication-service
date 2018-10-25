@@ -26,16 +26,6 @@ type UserModel struct {
 	Roles    []string `json:"roles"`
 }
 
-// HasRole checks whether the user has a specified role
-func (u UserModel) HasRole(role string) bool {
-	for _, v := range u.Roles {
-		if v == role {
-			return true
-		}
-	}
-	return false
-}
-
 // UserLoginResponse holds id and role the user is authenticated for
 type UserLoginResponse struct {
 	ID   uint   `json:"user_id"`

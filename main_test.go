@@ -15,7 +15,7 @@ import (
 
 var ts *httptest.Server
 
-// refactoring to role arrays and combining role dbs into one
+// Mock user DB
 var userDB = []UserModel{
 	UserModel{
 		Email:    "test-p1@test.com",
@@ -59,6 +59,16 @@ var userDB = []UserModel{
 		ID:       7,
 		Roles:    []string{"PARTICIPANT", "RESEARCHER", "ADMIN"},
 	},
+}
+
+// HasRole checks whether the user has a specified role
+func (u UserModel) HasRole(role string) bool {
+	for _, v := range u.Roles {
+		if v == role {
+			return true
+		}
+	}
+	return false
 }
 
 // MockLoginHandl is to emulate user-management server response for login requests
