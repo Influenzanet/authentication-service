@@ -17,4 +17,17 @@ go test
 ```
 
 ## Build
-**TODO**
+
+The included `Dockerfile` should provide everything needed to build and run the application.
+
+Build the image:
+```sh
+docker build --rm -t 'authentication-service:latest' .
+```
+
+Run the image:
+```sh
+docker run -p 3100:3100 authentication-service
+```
+
+Access the API on `localhost:3100`
