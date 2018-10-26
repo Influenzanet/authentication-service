@@ -1,17 +1,17 @@
-**Signup Admin**
+**Signup**
 ----
-  Start registration/promotion process for a new admin account with the given email address and password. **TODO** registration process still to be defined
+  Register a new user account with the given email address and password, if they match the validation criterias (valid email format and password at least 6 characters including letters and numbers).
 
 * **URL**
 
-  /v1/signup/admin
+  /v1/user/signup
 
 * **Method:**
 
   `POST`
 
 *  **URL Params**
-  None
+  * None
 
 * **Data Params**
   **Required:**
@@ -21,7 +21,7 @@
 * **Success Response:**
 
   * **Code:** 200 <br />
-    **Content:** `{ "token": "<token string>" }`
+    **Content:** `{ "token": "<token string>", "role": "PARTICIPANT" }`
 
 * **Error Response:**
 
@@ -51,4 +51,4 @@
     });
   ```
 * **Notes:**
-  None
+  * None

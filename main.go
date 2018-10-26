@@ -19,13 +19,9 @@ func main() {
 
 	v1 := router.Group("/v1")
 	{
-		loginHandles := v1.Group("/user")
-		loginHandles.POST("/login", loginHandl)
-
-		signupHandles := v1.Group("/signup")
-		signupHandles.POST("/participant", signupParticipantHandl)
-		signupHandles.POST("/researcher", signupResearcherHandl)
-		signupHandles.POST("/admin", signupAdminHandl)
+		userHandles := v1.Group("/user")
+		userHandles.POST("/login", loginHandl)
+		userHandles.POST("/signup", signupHandl)
 
 		tokenHandles := v1.Group("/token")
 		tokenHandles.GET("/validate", validateTokenHandl)

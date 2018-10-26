@@ -18,16 +18,13 @@ type userCredentials struct {
 	Role     string `json:"role"`
 }
 
-// UserModel holds information relevant for authentication
-type UserModel struct {
-	Email    string   `json:"email"`
-	Password string   `json:"password"`
-	ID       uint     `json:"user_id"`
-	Roles    []string `json:"roles"`
-}
-
 // UserLoginResponse holds id and role the user is authenticated for
 type UserLoginResponse struct {
+	ID   uint   `json:"user_id"`
+	Role string `json:"role"`
+}
+
+type userSignupResponse struct {
 	ID   uint   `json:"user_id"`
 	Role string `json:"role"`
 }
@@ -99,16 +96,58 @@ func loginHandl(context *gin.Context) {
 	context.JSON(http.StatusOK, tokenResp)
 }
 
-func signupParticipantHandl(context *gin.Context) {
-	context.JSON(http.StatusNotImplemented, gin.H{"error": "not implemented"})
-}
+func signupHandl(context *gin.Context) {
+	var creds userCredentials
+	if context.Request.ContentLength == 0 {
+		context.JSON(http.StatusBadRequest, gin.H{"error": "payload missing"})
+		return
+	}
 
-func signupResearcherHandl(context *gin.Context) {
-	context.JSON(http.StatusNotImplemented, gin.H{"error": "not implemented"})
-}
+	if err := context.ShouldBindJSON(&creds); err != nil {
+		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
-func signupAdminHandl(context *gin.Context) {
-	context.JSON(http.StatusNotImplemented, gin.H{"error": "not implemented"})
+	payload, err := json.Marshal(creds)
+
+	resp, err := http.Post(userManagementServer+"/signup", "application/json", bytes.NewBuffer(payload))
+	if err != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusCreated {
+		respBody, err := ioutil.ReadAll(resp.Body)
+		currentError := errorResponse{}
+		jsonErr := json.Unmarshal(respBody, &currentError)
+		if jsonErr != nil {
+			context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		context.JSON(resp.StatusCode, currentError)
+		return
+	}
+
+	respBody, err := ioutil.ReadAll(resp.Body)
+	currentUser := userSignupResponse{}
+	jsonErr := json.Unmarshal(respBody, &currentUser)
+	if jsonErr != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	token, err := generateNewToken(currentUser.ID, currentUser.Role)
+	if err != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Send response
+	tokenResp := tokenMessage{
+		Token: token,
+		Role:  currentUser.Role,
+	}
+	context.JSON(http.StatusCreated, tokenResp)
 }
 
 func validateTokenHandl(context *gin.Context) {

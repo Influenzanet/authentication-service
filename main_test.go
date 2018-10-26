@@ -15,6 +15,24 @@ import (
 
 var ts *httptest.Server
 
+// UserModel holds information relevant for authentication
+type UserModel struct {
+	Email    string   `json:"email"`
+	Password string   `json:"password"`
+	ID       uint     `json:"user_id"`
+	Roles    []string `json:"roles"`
+}
+
+// HasRole checks whether the user has a specified role
+func (u UserModel) HasRole(role string) bool {
+	for _, v := range u.Roles {
+		if v == role {
+			return true
+		}
+	}
+	return false
+}
+
 // Mock user DB
 var userDB = []UserModel{
 	UserModel{
@@ -61,17 +79,7 @@ var userDB = []UserModel{
 	},
 }
 
-// HasRole checks whether the user has a specified role
-func (u UserModel) HasRole(role string) bool {
-	for _, v := range u.Roles {
-		if v == role {
-			return true
-		}
-	}
-	return false
-}
-
-// MockLoginHandl is to emulate user-management server response for login requests
+// MockLoginHandl to emulate user-management server response for login requests
 func MockLoginHandl(context *gin.Context) {
 	var creds userCredentials
 	if err := context.ShouldBindJSON(&creds); err != nil {
@@ -111,6 +119,36 @@ func MockLoginHandl(context *gin.Context) {
 	context.JSON(http.StatusOK, responseData)
 }
 
+// MockSignupHandl to emulate user-management server response for signup requests
+func MockSignupHandl(context *gin.Context) {
+	var creds userCredentials
+	if err := context.ShouldBindJSON(&creds); err != nil {
+		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	for _, v := range userDB {
+		if v.Email == creds.Email {
+			context.JSON(http.StatusBadRequest, gin.H{"error": "email address already in use"})
+			return
+		}
+	}
+	newUser := UserModel{
+		Email:    creds.Email,
+		Password: creds.Password,          // Will be secured in the real implementation
+		ID:       (uint)(len(userDB) + 1), // Will be more reliable and secure in real implementation
+		Roles:    []string{"PARTICIPANT"},
+	}
+	userDB = append(userDB, newUser)
+
+	responseData := &UserLoginResponse{
+		ID:   newUser.ID,
+		Role: "PARTICIPANT",
+	}
+
+	context.JSON(http.StatusCreated, responseData)
+}
+
 // This function is used for setup before executing the test functions
 func TestMain(m *testing.M) {
 	//Set Gin to Test Mode
@@ -118,6 +156,7 @@ func TestMain(m *testing.M) {
 
 	r := gin.Default()
 	r.POST("/login", MockLoginHandl)
+	r.POST("/signup", MockSignupHandl)
 	ts := httptest.NewServer(r)
 	defer ts.Close()
 
@@ -435,6 +474,92 @@ func TestLoginAdmin(t *testing.T) {
 		_, tokenExists := response["token"]
 		roleValue, roleExists := response["role"]
 		if w.Code != http.StatusOK || !tokenExists || !roleExists || roleValue != testingRole {
+			t.Errorf("status code: %d", w.Code)
+			t.Errorf("response content: %s", w.Body.String())
+			return
+		}
+	})
+}
+
+func TestSignup(t *testing.T) {
+	r := gin.Default()
+	r.POST("/v1/user/signup", signupHandl)
+
+	const testingRole = "PARTICIPANT"
+
+	/********************************************/
+	/***** Check signup without payload: *****/
+	/********************************************/
+	t.Run("Testing without payload", func(t *testing.T) {
+		req, _ := http.NewRequest("POST", "/v1/user/signup", nil)
+		w := performRequest(r, req)
+
+		// Convert the JSON response to a map
+		var response map[string]string
+		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
+			t.Errorf("error parsing response body: %s", err.Error())
+		}
+
+		value, exists := response["error"]
+		if w.Code != http.StatusBadRequest || !exists || value != "payload missing" {
+			t.Errorf("status code: %d", w.Code)
+			t.Errorf("response content: %s", w.Body.String())
+			return
+		}
+	})
+
+	/********************************************/
+	/***** Check signup with email and password: ****/
+	/********************************************/
+	t.Run("Testing signup with email and password", func(t *testing.T) {
+		t.Logf("Testing signup with email and password")
+		loginData := &userCredentials{
+			Email:    "test-s1@test.com",
+			Password: "testpassword",
+		}
+		loginPayload, _ := json.Marshal(loginData)
+
+		req, _ := http.NewRequest("POST", "/v1/user/signup", bytes.NewBuffer(loginPayload))
+		req.Header.Add("Content-Type", "application/json")
+		w := performRequest(r, req)
+
+		// Convert the JSON response to a map
+		var response map[string]string
+		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
+			t.Errorf("error parsing response body: %s", err.Error())
+		}
+
+		_, tokenExists := response["token"]
+		roleValue, roleExists := response["role"]
+		if w.Code != http.StatusCreated || !tokenExists || !roleExists || roleValue != testingRole {
+			t.Errorf("status code: %d", w.Code)
+			t.Errorf("response content: %s", w.Body.String())
+			return
+		}
+	})
+
+	/********************************************/
+	/***** Check signup with missing required fields: ****/
+	/********************************************/
+	t.Run("Testing signup with missing required fields", func(t *testing.T) {
+		loginData := &userCredentials{
+			Email:    "",
+			Password: "",
+		}
+		loginPayload, _ := json.Marshal(loginData)
+
+		req, _ := http.NewRequest("POST", "/v1/user/signup", bytes.NewBuffer(loginPayload))
+		req.Header.Add("Content-Type", "application/json")
+		w := performRequest(r, req)
+
+		// Convert the JSON response to a map
+		var response map[string]string
+		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
+			t.Errorf("error parsing response body: %s", err.Error())
+		}
+
+		_, exists := response["error"]
+		if w.Code != http.StatusBadRequest || !exists {
 			t.Errorf("status code: %d", w.Code)
 			t.Errorf("response content: %s", w.Body.String())
 			return
