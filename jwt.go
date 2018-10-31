@@ -25,7 +25,7 @@ var (
 )
 
 type userClaims struct {
-	UserID uint   `json:"user_id"`
+	UserID string `json:"user_id"`
 	Role   string `json:"role"`
 	jwt.StandardClaims
 }
@@ -76,7 +76,7 @@ func loadVerifyKey(keyPath string, retry int) (*rsa.PublicKey, error) {
 }
 
 // GenerateNewToken create and signes a new token
-func generateNewToken(userID uint, userRole string) (string, error) {
+func generateNewToken(userID string, userRole string) (string, error) {
 	// Create the Claims
 	claims := userClaims{
 		userID,

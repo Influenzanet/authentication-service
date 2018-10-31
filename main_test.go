@@ -19,7 +19,7 @@ var ts *httptest.Server
 type UserModel struct {
 	Email    string   `json:"email"`
 	Password string   `json:"password"`
-	ID       uint     `json:"user_id"`
+	ID       string   `json:"user_id"`
 	Roles    []string `json:"roles"`
 }
 
@@ -38,43 +38,43 @@ var userDB = []UserModel{
 	UserModel{
 		Email:    "test-p1@test.com",
 		Password: "testpassword", // is stored hashed on the real server
-		ID:       1,
+		ID:       "1",
 		Roles:    []string{"PARTICIPANT"},
 	},
 	UserModel{
 		Email:    "test-p2@test.com",
 		Password: "testpassword2", // is stored hashed on the real server
-		ID:       2,
+		ID:       "2",
 		Roles:    []string{"PARTICIPANT"},
 	},
 	UserModel{
 		Email:    "test-p3@test.com",
 		Password: "testpassword3", // is stored hashed on the real server
-		ID:       3,
+		ID:       "3",
 		Roles:    []string{"PARTICIPANT"},
 	},
 	UserModel{
 		Email:    "test-r1@test.com",
 		Password: "testpassword4", // is stored hashed on the real server
-		ID:       4,
+		ID:       "4",
 		Roles:    []string{"PARTICIPANT", "RESEARCHER"},
 	},
 	UserModel{
 		Email:    "test-r2@test.com",
 		Password: "testpassword5", // is stored hashed on the real server
-		ID:       5,
+		ID:       "5",
 		Roles:    []string{"PARTICIPANT", "RESEARCHER"},
 	},
 	UserModel{
 		Email:    "test-a1@test.com",
 		Password: "testpassword6", // is stored hashed on the real server
-		ID:       6,
+		ID:       "6",
 		Roles:    []string{"PARTICIPANT", "RESEARCHER", "ADMIN"},
 	},
 	UserModel{
 		Email:    "test-a2@test.com",
 		Password: "testpassword7", // is stored hashed on the real server
-		ID:       7,
+		ID:       "7",
 		Roles:    []string{"PARTICIPANT", "RESEARCHER", "ADMIN"},
 	},
 }
@@ -135,8 +135,8 @@ func MockSignupHandl(context *gin.Context) {
 	}
 	newUser := UserModel{
 		Email:    creds.Email,
-		Password: creds.Password,          // Will be secured in the real implementation
-		ID:       (uint)(len(userDB) + 1), // Will be more reliable and secure in real implementation
+		Password: creds.Password,            // Will be secured in the real implementation
+		ID:       (string)(len(userDB) + 1), // Will be more reliable and secure in real implementation
 		Roles:    []string{"PARTICIPANT"},
 	}
 	userDB = append(userDB, newUser)

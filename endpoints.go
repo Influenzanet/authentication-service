@@ -20,12 +20,12 @@ type userCredentials struct {
 
 // UserLoginResponse holds id and role the user is authenticated for
 type UserLoginResponse struct {
-	ID   uint   `json:"user_id"`
+	ID   string `json:"user_id"`
 	Role string `json:"role"`
 }
 
 type userSignupResponse struct {
-	ID   uint   `json:"user_id"`
+	ID   string `json:"user_id"`
 	Role string `json:"role"`
 }
 
