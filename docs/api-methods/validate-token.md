@@ -39,17 +39,14 @@
 
 
 * **Sample Call:**
-  TODO: add sample call for go
-
-  ```javascript
-    $.ajax({
-      url: "/users/1",
-      dataType: "json",
-      type : "GET",
-      success : function(r) {
-        console.log(r);
-      }
-    });
+  
+  ```go
+    token = "<your-received-token>"
+    client := &http.Client{}
+    req, _ := http.NewRequest("GET", auth-service-addr + "/v1/token/validate", nil)
+    req.Header.Add("Authorization", "Bearer "+ token)
+    resp, err := client.Do(req)
+    defer resp.Body.Close()
   ```
 * **Notes:**
   As long as the old verification key is present, the method accepts tokens signed with that key as well.
