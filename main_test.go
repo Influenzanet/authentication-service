@@ -638,50 +638,12 @@ func TestRenewToken(t *testing.T) {
 		}
 	})
 
-	// Test with empty token in url
-	t.Run("Test with empty token in url", func(t *testing.T) {
-		req, _ := http.NewRequest("GET", "/v1/token/renew?token=", nil)
-		w := performRequest(r, req)
-
-		// Convert the JSON response to a map
-		var response map[string]string
-		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
-			t.Errorf("error parsing response body: %s", err.Error())
-		}
-
-		_, exists := response["error"]
-		if w.Code != http.StatusBadRequest || !exists {
-			t.Errorf("status code: %d instead of %d", w.Code, http.StatusBadRequest)
-			t.Errorf("response content: %s", w.Body.String())
-			return
-		}
-	})
-
 	badToken := "eydfsdfsdffsdfsdf.w45345sdfsdvcsdsdf.435345fsdf-4rwefsdfsd" // "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJyb2xlIjoicGFydGljaXBhbnQiLCJleHAiOjE1Mzk0MTc0MzAsImlhdCI6MTUzOTQxNzQyNX0.klxofJLg5J31v7hKO7TbPrceBzyYlp9kIAJuotUmY11pk08Hnn2uHtuDfdqBWVtcI_lQ-vKiikVs5icrewyQOXMzTesQXI41SZvRdEQfit1MZ5syE0a2PODRFsizaqT5vqVN04ZzX_3iPEvSBP25wMy8R4dzYaY5XcR2heJWIxaNFd3w65UDa_mNk4u3Oem7XO1Ufn_-ay98XqAUg5Zo0TI9sk2WQF57pzXAlHMVmCMNW1bP_OPra9CCQb2pUm2sKJiAgWVOBVB4lz50VoTsoJimQoTc5UpF3SCujL-Yt5mh7d7EUvDkKoSuqd5Pc8iKHs1Ix9jSmtoLpPxmCAnepA"
 
 	// Test with wrong token
 	t.Run("Testing with wrong token", func(t *testing.T) {
 		req, _ := http.NewRequest("GET", "/v1/token/renew", nil)
 		req.Header.Add("Authorization", "Bearer "+badToken)
-		w := performRequest(r, req)
-
-		// Convert the JSON response to a map
-		var response map[string]string
-		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
-			t.Errorf("error parsing response body: %s", err.Error())
-		}
-
-		_, exists := response["error"]
-		if w.Code != http.StatusUnauthorized || !exists {
-			t.Errorf("status code: %d instead of %d", w.Code, http.StatusUnauthorized)
-			t.Errorf("response content: %s", w.Body.String())
-			return
-		}
-	})
-
-	// Test with wrong token in url
-	t.Run("Test with wrong token in url", func(t *testing.T) {
-		req, _ := http.NewRequest("GET", "/v1/token/renew?token="+badToken, nil)
 		w := performRequest(r, req)
 
 		// Convert the JSON response to a map

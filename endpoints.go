@@ -159,8 +159,6 @@ func validateTokenHandl(context *gin.Context) {
 	if ok && len(tokens) >= 1 {
 		token = tokens[0]
 		token = strings.TrimPrefix(token, "Bearer ")
-	} else if len(req.FormValue("token")) > 0 {
-		token = req.FormValue("token")
 	} else {
 		context.JSON(http.StatusBadRequest, gin.H{"error": "no Authorization token found"})
 		return
@@ -195,8 +193,6 @@ func renewTokenHandl(context *gin.Context) {
 			context.JSON(http.StatusBadRequest, gin.H{"error": "no Authorization token found"})
 			return
 		}
-	} else if len(req.FormValue("token")) > 0 {
-		token = req.FormValue("token")
 	} else {
 		context.JSON(http.StatusBadRequest, gin.H{"error": "no Authorization token found"})
 		return
