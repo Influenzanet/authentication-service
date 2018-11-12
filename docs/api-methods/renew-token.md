@@ -15,9 +15,8 @@
   **Required:**
   `Authorization: Bearer <token string>`
 
-* **URL Params** <br />
-  **Optional:** (instead of header params) <br />
-  `token=[string]`
+*  **URL Params:**
+   * None
 
 * **Data Params**
   None
@@ -46,17 +45,14 @@
     **Typical reason:** Something went wrong during the token generation, e.g., because signing key is not available.
 
 * **Sample Call:**
-  TODO: add sample call for go
 
-  ```javascript
-    $.ajax({
-      url: "/users/1",
-      dataType: "json",
-      type : "GET",
-      success : function(r) {
-        console.log(r);
-      }
-    });
+  ```go
+    token = "<your-received-token>"
+    client := &http.Client{}
+    req, _ := http.NewRequest("GET", auth-service-addr + "/v1/token/renew", nil)
+    req.Header.Add("Authorization", "Bearer "+ token)
+    resp, err := client.Do(req)
+    defer resp.Body.Close()
   ```
 * **Notes:**
   Token will keep currently used role (e.g. admin).

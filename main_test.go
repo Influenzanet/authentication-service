@@ -19,7 +19,7 @@ var ts *httptest.Server
 type UserModel struct {
 	Email    string   `json:"email"`
 	Password string   `json:"password"`
-	ID       uint     `json:"user_id"`
+	ID       string   `json:"user_id"`
 	Roles    []string `json:"roles"`
 }
 
@@ -38,43 +38,43 @@ var userDB = []UserModel{
 	UserModel{
 		Email:    "test-p1@test.com",
 		Password: "testpassword", // is stored hashed on the real server
-		ID:       1,
+		ID:       "1",
 		Roles:    []string{"PARTICIPANT"},
 	},
 	UserModel{
 		Email:    "test-p2@test.com",
 		Password: "testpassword2", // is stored hashed on the real server
-		ID:       2,
+		ID:       "2",
 		Roles:    []string{"PARTICIPANT"},
 	},
 	UserModel{
 		Email:    "test-p3@test.com",
 		Password: "testpassword3", // is stored hashed on the real server
-		ID:       3,
+		ID:       "3",
 		Roles:    []string{"PARTICIPANT"},
 	},
 	UserModel{
 		Email:    "test-r1@test.com",
 		Password: "testpassword4", // is stored hashed on the real server
-		ID:       4,
+		ID:       "4",
 		Roles:    []string{"PARTICIPANT", "RESEARCHER"},
 	},
 	UserModel{
 		Email:    "test-r2@test.com",
 		Password: "testpassword5", // is stored hashed on the real server
-		ID:       5,
+		ID:       "5",
 		Roles:    []string{"PARTICIPANT", "RESEARCHER"},
 	},
 	UserModel{
 		Email:    "test-a1@test.com",
 		Password: "testpassword6", // is stored hashed on the real server
-		ID:       6,
+		ID:       "6",
 		Roles:    []string{"PARTICIPANT", "RESEARCHER", "ADMIN"},
 	},
 	UserModel{
 		Email:    "test-a2@test.com",
 		Password: "testpassword7", // is stored hashed on the real server
-		ID:       7,
+		ID:       "7",
 		Roles:    []string{"PARTICIPANT", "RESEARCHER", "ADMIN"},
 	},
 }
@@ -135,8 +135,8 @@ func MockSignupHandl(context *gin.Context) {
 	}
 	newUser := UserModel{
 		Email:    creds.Email,
-		Password: creds.Password,          // Will be secured in the real implementation
-		ID:       (uint)(len(userDB) + 1), // Will be more reliable and secure in real implementation
+		Password: creds.Password,            // Will be secured in the real implementation
+		ID:       (string)(len(userDB) + 1), // Will be more reliable and secure in real implementation
 		Roles:    []string{"PARTICIPANT"},
 	}
 	userDB = append(userDB, newUser)
@@ -591,6 +591,119 @@ func getTokenForParticipant() string {
 	return value
 }
 
+func TestValidateToken(t *testing.T) {
+	tokenValidityPeriod = time.Second * 2
+	minTokenAge = time.Second * 1
+
+	r := gin.Default()
+	r.GET("/v1/token/validate", validateTokenHandl)
+
+	// Test without token
+	t.Run("Testing without token", func(t *testing.T) {
+		req, _ := http.NewRequest("GET", "/v1/token/validate", nil)
+		w := performRequest(r, req)
+
+		// Convert the JSON response to a map
+		var response map[string]string
+		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
+			t.Errorf("error parsing response body: %s", err.Error())
+		}
+
+		_, exists := response["error"]
+		if w.Code != http.StatusBadRequest || !exists {
+			t.Errorf("status code: %d instead of %d", w.Code, http.StatusBadRequest)
+			t.Errorf("response content: %s", w.Body.String())
+			return
+		}
+	})
+
+	// Test with empty token
+	t.Run("Test with empty token", func(t *testing.T) {
+		req, _ := http.NewRequest("GET", "/v1/token/validate", nil)
+		req.Header.Add("Authorization", "Bearer "+"")
+		w := performRequest(r, req)
+
+		// Convert the JSON response to a map
+		var response map[string]string
+		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
+			t.Errorf("error parsing response body: %s", err.Error())
+		}
+
+		_, exists := response["error"]
+		if w.Code != http.StatusBadRequest || !exists {
+			t.Errorf("status code: %d instead of %d", w.Code, http.StatusBadRequest)
+			t.Errorf("response content: %s", w.Body.String())
+			return
+		}
+	})
+
+	badToken := "eydfsdfsdffsdfsdf.w45345sdfsdvcsdsdf.435345fsdf-4rwefsdfsd" // "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJyb2xlIjoicGFydGljaXBhbnQiLCJleHAiOjE1Mzk0MTc0MzAsImlhdCI6MTUzOTQxNzQyNX0.klxofJLg5J31v7hKO7TbPrceBzyYlp9kIAJuotUmY11pk08Hnn2uHtuDfdqBWVtcI_lQ-vKiikVs5icrewyQOXMzTesQXI41SZvRdEQfit1MZ5syE0a2PODRFsizaqT5vqVN04ZzX_3iPEvSBP25wMy8R4dzYaY5XcR2heJWIxaNFd3w65UDa_mNk4u3Oem7XO1Ufn_-ay98XqAUg5Zo0TI9sk2WQF57pzXAlHMVmCMNW1bP_OPra9CCQb2pUm2sKJiAgWVOBVB4lz50VoTsoJimQoTc5UpF3SCujL-Yt5mh7d7EUvDkKoSuqd5Pc8iKHs1Ix9jSmtoLpPxmCAnepA"
+
+	// Test with wrong Token
+	t.Run("Test with wrong Token", func(t *testing.T) {
+		req, _ := http.NewRequest("GET", "/v1/token/validate", nil)
+		req.Header.Add("Authorization", "Bearer "+badToken)
+		w := performRequest(r, req)
+
+		// Convert the JSON response to a map
+		var response map[string]string
+		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
+			t.Errorf("error parsing response body: %s", err.Error())
+		}
+
+		_, exists := response["error"]
+		if w.Code != http.StatusUnauthorized || !exists {
+			t.Errorf("status code: %d instead of %d", w.Code, http.StatusUnauthorized)
+			t.Errorf("response content: %s", w.Body.String())
+			return
+		}
+	})
+
+	token := getTokenForParticipant()
+
+	// Test with valid Token
+	t.Run("Test with valid Token", func(t *testing.T) {
+		req, _ := http.NewRequest("GET", "/v1/token/validate", nil)
+		req.Header.Add("Authorization", "Bearer "+token)
+		w := performRequest(r, req)
+
+		// Convert the JSON response to a map
+		var response map[string]interface{}
+		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
+			t.Errorf("error parsing response body: %s", err.Error())
+		}
+
+		_, exists := response["token"]
+		if w.Code != http.StatusOK || !exists {
+			t.Errorf("status code: %d instead of %d", w.Code, http.StatusOK)
+			t.Errorf("response content: %s", w.Body.String())
+			return
+		}
+	})
+
+	time.Sleep(tokenValidityPeriod + time.Second)
+
+	// Test with expired Token
+	t.Run("Test with expired Token", func(t *testing.T) {
+		req, _ := http.NewRequest("GET", "/v1/token/validate", nil)
+		req.Header.Add("Authorization", "Bearer "+token)
+		w := performRequest(r, req)
+
+		// Convert the JSON response to a map
+		var response map[string]string
+		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
+			t.Errorf("error parsing response body: %s", err.Error())
+		}
+
+		_, exists := response["error"]
+		if w.Code != http.StatusUnauthorized || !exists {
+			t.Errorf("status code: %d instead of %d", w.Code, http.StatusUnauthorized)
+			t.Errorf("response content: %s", w.Body.String())
+			return
+		}
+	})
+}
+
 func TestRenewToken(t *testing.T) {
 	tokenValidityPeriod = time.Second * 2
 	minTokenAge = time.Second * 1
@@ -638,50 +751,12 @@ func TestRenewToken(t *testing.T) {
 		}
 	})
 
-	// Test with empty token in url
-	t.Run("Test with empty token in url", func(t *testing.T) {
-		req, _ := http.NewRequest("GET", "/v1/token/renew?token=", nil)
-		w := performRequest(r, req)
-
-		// Convert the JSON response to a map
-		var response map[string]string
-		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
-			t.Errorf("error parsing response body: %s", err.Error())
-		}
-
-		_, exists := response["error"]
-		if w.Code != http.StatusBadRequest || !exists {
-			t.Errorf("status code: %d instead of %d", w.Code, http.StatusBadRequest)
-			t.Errorf("response content: %s", w.Body.String())
-			return
-		}
-	})
-
 	badToken := "eydfsdfsdffsdfsdf.w45345sdfsdvcsdsdf.435345fsdf-4rwefsdfsd" // "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJyb2xlIjoicGFydGljaXBhbnQiLCJleHAiOjE1Mzk0MTc0MzAsImlhdCI6MTUzOTQxNzQyNX0.klxofJLg5J31v7hKO7TbPrceBzyYlp9kIAJuotUmY11pk08Hnn2uHtuDfdqBWVtcI_lQ-vKiikVs5icrewyQOXMzTesQXI41SZvRdEQfit1MZ5syE0a2PODRFsizaqT5vqVN04ZzX_3iPEvSBP25wMy8R4dzYaY5XcR2heJWIxaNFd3w65UDa_mNk4u3Oem7XO1Ufn_-ay98XqAUg5Zo0TI9sk2WQF57pzXAlHMVmCMNW1bP_OPra9CCQb2pUm2sKJiAgWVOBVB4lz50VoTsoJimQoTc5UpF3SCujL-Yt5mh7d7EUvDkKoSuqd5Pc8iKHs1Ix9jSmtoLpPxmCAnepA"
 
 	// Test with wrong token
 	t.Run("Testing with wrong token", func(t *testing.T) {
 		req, _ := http.NewRequest("GET", "/v1/token/renew", nil)
 		req.Header.Add("Authorization", "Bearer "+badToken)
-		w := performRequest(r, req)
-
-		// Convert the JSON response to a map
-		var response map[string]string
-		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
-			t.Errorf("error parsing response body: %s", err.Error())
-		}
-
-		_, exists := response["error"]
-		if w.Code != http.StatusUnauthorized || !exists {
-			t.Errorf("status code: %d instead of %d", w.Code, http.StatusUnauthorized)
-			t.Errorf("response content: %s", w.Body.String())
-			return
-		}
-	})
-
-	// Test with wrong token in url
-	t.Run("Test with wrong token in url", func(t *testing.T) {
-		req, _ := http.NewRequest("GET", "/v1/token/renew?token="+badToken, nil)
 		w := performRequest(r, req)
 
 		// Convert the JSON response to a map
@@ -731,25 +806,6 @@ func TestRenewToken(t *testing.T) {
 	t.Run("Testing token with header param", func(t *testing.T) {
 		req, _ := http.NewRequest("GET", "/v1/token/renew", nil)
 		req.Header.Add("Authorization", "Bearer "+token)
-		w := performRequest(r, req)
-
-		// Convert the JSON response to a map
-		var response map[string]string
-		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
-			t.Errorf("error parsing response body: %s", err.Error())
-		}
-
-		_, exists := response["token"]
-		if w.Code != http.StatusOK || !exists {
-			t.Errorf("status code: %d instead of %d", w.Code, http.StatusOK)
-			t.Errorf("response content: %s", w.Body.String())
-			return
-		}
-	})
-
-	// Test renew after min age reached - wait 2 seconds - with url param
-	t.Run("Testing token with url param", func(t *testing.T) {
-		req, _ := http.NewRequest("GET", "/v1/token/renew?token="+token, nil)
 		w := performRequest(r, req)
 
 		// Convert the JSON response to a map

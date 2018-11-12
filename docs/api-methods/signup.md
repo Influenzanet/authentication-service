@@ -38,17 +38,15 @@
     **Typical reason:** Something went wrong during the token generation. User's input are ok, but method failed generating a valid token, e.g. because signing key is not available.
 
 * **Sample Call:**
-  TODO: add sample call for go
 
-  ```javascript
-    $.ajax({
-      url: "/users/1",
-      dataType: "json",
-      type : "GET",
-      success : function(r) {
-        console.log(r);
-      }
-    });
+  ```go
+    creds := &userCredentials{
+      Email:    "your@email.com", // `json:"email"`
+      Password: "yourpassword", // `json:"password"`
+    }
+    payload, err := json.Marshal(creds)
+    resp, err := http.Post(auth-service-addr + "/v1/user/signup", "application/json", bytes.NewBuffer(payload))
+    defer resp.Body.Close()
   ```
 * **Notes:**
   * None
