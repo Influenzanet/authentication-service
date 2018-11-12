@@ -15,9 +15,8 @@
   **Required:**
   `Authorization: Bearer <token string>`
 
-* **URL Params** <br />
-  **Optional:** (instead of header params) <br />
-  `token=[string]`
+*  **URL Params:**
+   * None
 
 * **Data Params**
   None
