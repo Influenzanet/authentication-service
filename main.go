@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var userManagementServer = "http//test:3250"
+var userManagementServer = "http//test:3250/v1"
 
 func init() {
 	gin.SetMode(gin.ReleaseMode)

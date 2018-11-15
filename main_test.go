@@ -155,12 +155,12 @@ func TestMain(m *testing.M) {
 	gin.SetMode(gin.TestMode)
 
 	r := gin.Default()
-	r.POST("/login", MockLoginHandl)
-	r.POST("/signup", MockSignupHandl)
+	r.POST("/v1/login", MockLoginHandl)
+	r.POST("/v1/signup", MockSignupHandl)
 	ts := httptest.NewServer(r)
 	defer ts.Close()
 
-	userManagementServer = ts.URL
+	userManagementServer = ts.URL + "/v1"
 
 	// Run the other tests
 	os.Exit(m.Run())
