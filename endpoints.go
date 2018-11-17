@@ -64,12 +64,16 @@ func loginHandl(context *gin.Context) {
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		respBody, err := ioutil.ReadAll(resp.Body)
-		currentError := errorResponse{}
-		jsonErr := json.Unmarshal(respBody, &currentError)
-		if jsonErr != nil {
+		if err != nil {
 			context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
+		currentError := errorResponse{}
+		if jsonErr := json.Unmarshal(respBody, &currentError); jsonErr != nil {
+			context.JSON(http.StatusInternalServerError, gin.H{"error": jsonErr.Error()})
+			return
+		}
+
 		context.JSON(resp.StatusCode, currentError)
 		return
 	}
@@ -118,12 +122,16 @@ func signupHandl(context *gin.Context) {
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusCreated {
 		respBody, err := ioutil.ReadAll(resp.Body)
-		currentError := errorResponse{}
-		jsonErr := json.Unmarshal(respBody, &currentError)
-		if jsonErr != nil {
+		if err != nil {
 			context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
+		currentError := errorResponse{}
+		if jsonErr := json.Unmarshal(respBody, &currentError); jsonErr != nil {
+			context.JSON(http.StatusInternalServerError, gin.H{"error": jsonErr.Error()})
+			return
+		}
+
 		context.JSON(resp.StatusCode, currentError)
 		return
 	}
