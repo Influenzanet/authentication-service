@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -44,10 +43,6 @@ func checkTokenAgeMaturity(issuedAt int64) bool {
 
 func loginHandl(context *gin.Context) {
 	var creds userCredentials
-	if context.Request.ContentLength == 0 {
-		context.JSON(http.StatusBadRequest, gin.H{"error": "payload missing"})
-		return
-	}
 
 	if err := context.ShouldBindJSON(&creds); err != nil {
 		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -102,10 +97,6 @@ func loginHandl(context *gin.Context) {
 
 func signupHandl(context *gin.Context) {
 	var creds userCredentials
-	if context.Request.ContentLength == 0 {
-		context.JSON(http.StatusBadRequest, gin.H{"error": "payload missing"})
-		return
-	}
 
 	if err := context.ShouldBindJSON(&creds); err != nil {
 		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -159,22 +150,7 @@ func signupHandl(context *gin.Context) {
 }
 
 func validateTokenHandl(context *gin.Context) {
-	req := context.Request
-
-	// Get token string from header field
-	var token string
-	tokens, ok := req.Header["Authorization"]
-	if ok && len(tokens) >= 1 {
-		token = tokens[0]
-		token = strings.TrimPrefix(token, "Bearer ")
-		if len(token) == 0 {
-			context.JSON(http.StatusBadRequest, gin.H{"error": "no Authorization token found"})
-			return
-		}
-	} else {
-		context.JSON(http.StatusBadRequest, gin.H{"error": "no Authorization token found"})
-		return
-	}
+	token := context.MustGet("encodedToken").(string)
 
 	// Parse and validate token
 	parsedToken, ok, oldKey, err := validateToken(token)
@@ -196,22 +172,7 @@ func validateTokenHandl(context *gin.Context) {
 }
 
 func renewTokenHandl(context *gin.Context) {
-	req := context.Request
-
-	// Get token string from header field
-	var token string
-	tokens, ok := req.Header["Authorization"]
-	if ok && len(tokens) >= 1 {
-		token = tokens[0]
-		token = strings.TrimPrefix(token, "Bearer ")
-		if len(token) == 0 {
-			context.JSON(http.StatusBadRequest, gin.H{"error": "no Authorization token found"})
-			return
-		}
-	} else {
-		context.JSON(http.StatusBadRequest, gin.H{"error": "no Authorization token found"})
-		return
-	}
+	token := context.MustGet("encodedToken").(string)
 
 	// Parse and validate token
 	parsedToken, ok, _, err := validateToken(token)
