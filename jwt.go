@@ -25,8 +25,9 @@ var (
 )
 
 type userClaims struct {
-	UserID string `json:"user_id"`
-	Role   string `json:"role"`
+	UserID            string   `json:"user_id"`
+	Roles             []string `json:"roles"`
+	AuthenticatedRole string   `json:"authenticated_role"`
 	jwt.StandardClaims
 }
 
@@ -76,11 +77,12 @@ func loadVerifyKey(keyPath string, retry int) (*rsa.PublicKey, error) {
 }
 
 // GenerateNewToken create and signes a new token
-func generateNewToken(userID string, userRole string) (string, error) {
+func generateNewToken(userID string, userRoles []string, authenticatedRole string) (string, error) {
 	// Create the Claims
 	claims := userClaims{
 		userID,
-		userRole,
+		userRoles,
+		authenticatedRole,
 		jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(tokenValidityPeriod).Unix(),
 			IssuedAt:  time.Now().Unix(),

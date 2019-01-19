@@ -19,13 +19,15 @@ type userCredentials struct {
 
 // UserLoginResponse holds id and role the user is authenticated for
 type UserLoginResponse struct {
-	ID   string `json:"user_id"`
-	Role string `json:"role"`
+	ID                string   `json:"user_id"`
+	Roles             []string `json:"roles"`
+	AuthenticatedRole string   `json:"authenticated_role"`
 }
 
 type userSignupResponse struct {
-	ID   string `json:"user_id"`
-	Role string `json:"role"`
+	ID                string   `json:"user_id"`
+	Roles             []string `json:"roles"`
+	AuthenticatedRole string   `json:"authenticated_role"`
 }
 
 type errorResponse struct {
@@ -33,8 +35,9 @@ type errorResponse struct {
 }
 
 type tokenMessage struct {
-	Token string `json:"token"`
-	Role  string `json:"role"`
+	Token             string   `json:"token"`
+	Roles             []string `json:"roles"`
+	AuthenticatedRole string   `json:"authenticated_role"`
 }
 
 func checkTokenAgeMaturity(issuedAt int64) bool {
@@ -81,7 +84,7 @@ func loginHandl(context *gin.Context) {
 		return
 	}
 
-	token, err := generateNewToken(currentUser.ID, currentUser.Role)
+	token, err := generateNewToken(currentUser.ID, currentUser.Roles, currentUser.AuthenticatedRole)
 	if err != nil {
 		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -89,8 +92,9 @@ func loginHandl(context *gin.Context) {
 
 	// Send response
 	tokenResp := tokenMessage{
-		Token: token,
-		Role:  currentUser.Role,
+		Token:             token,
+		Roles:             currentUser.Roles,
+		AuthenticatedRole: currentUser.AuthenticatedRole,
 	}
 	context.JSON(http.StatusOK, tokenResp)
 }
@@ -135,7 +139,7 @@ func signupHandl(context *gin.Context) {
 		return
 	}
 
-	token, err := generateNewToken(currentUser.ID, currentUser.Role)
+	token, err := generateNewToken(currentUser.ID, currentUser.Roles, currentUser.AuthenticatedRole)
 	if err != nil {
 		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -143,8 +147,9 @@ func signupHandl(context *gin.Context) {
 
 	// Send response
 	tokenResp := tokenMessage{
-		Token: token,
-		Role:  currentUser.Role,
+		Token:             token,
+		Roles:             currentUser.Roles,
+		AuthenticatedRole: currentUser.AuthenticatedRole,
 	}
 	context.JSON(http.StatusCreated, tokenResp)
 }
@@ -192,7 +197,7 @@ func renewTokenHandl(context *gin.Context) {
 	}
 
 	// Generate new token:
-	newToken, err := generateNewToken(parsedToken.UserID, parsedToken.Role)
+	newToken, err := generateNewToken(parsedToken.UserID, parsedToken.Roles, parsedToken.AuthenticatedRole)
 	if err != nil {
 		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
