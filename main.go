@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var userManagementServer = "http//test:3250/v1"
+var userManagementServer = "http://user-management:3200/v1"
 
 func init() {
 	gin.SetMode(gin.ReleaseMode)
@@ -20,10 +20,12 @@ func main() {
 	v1 := router.Group("/v1")
 	{
 		userHandles := v1.Group("/user")
+		userHandles.Use(RequirePayload())
 		userHandles.POST("/login", loginHandl)
 		userHandles.POST("/signup", signupHandl)
 
 		tokenHandles := v1.Group("/token")
+		tokenHandles.Use(ExtractToken())
 		tokenHandles.GET("/validate", validateTokenHandl)
 		tokenHandles.GET("/renew", renewTokenHandl)
 	}

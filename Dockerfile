@@ -9,6 +9,7 @@ RUN apk add --no-cache git \
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags '-extldflags "-static"' -o main .
 FROM scratch
 COPY --from=builder /build/main /app/
+VOLUME ["/app/keys"]
 WORKDIR /app
 EXPOSE 3100:3100
 CMD ["./main"]

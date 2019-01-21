@@ -17,10 +17,11 @@ var ts *httptest.Server
 
 // UserModel holds information relevant for authentication
 type UserModel struct {
-	Email    string   `json:"email"`
-	Password string   `json:"password"`
-	ID       string   `json:"user_id"`
-	Roles    []string `json:"roles"`
+	Email             string   `json:"email"`
+	Password          string   `json:"password"`
+	ID                string   `json:"user_id"`
+	Roles             []string `json:"roles"`
+	AuthenticatedRole string   `json:"authenticated_role"`
 }
 
 // HasRole checks whether the user has a specified role
@@ -112,8 +113,9 @@ func MockLoginHandl(context *gin.Context) {
 	}
 
 	responseData := &UserLoginResponse{
-		ID:   currentUser.ID,
-		Role: creds.Role,
+		ID:                currentUser.ID,
+		Roles:             currentUser.Roles,
+		AuthenticatedRole: creds.Role,
 	}
 
 	context.JSON(http.StatusOK, responseData)
@@ -142,8 +144,9 @@ func MockSignupHandl(context *gin.Context) {
 	userDB = append(userDB, newUser)
 
 	responseData := &UserLoginResponse{
-		ID:   newUser.ID,
-		Role: "PARTICIPANT",
+		ID:                newUser.ID,
+		Roles:             newUser.Roles,
+		AuthenticatedRole: "PARTICIPANT",
 	}
 
 	context.JSON(http.StatusCreated, responseData)
@@ -174,7 +177,7 @@ func performRequest(r http.Handler, req *http.Request) *httptest.ResponseRecorde
 
 func TestLoginParticipant(t *testing.T) {
 	r := gin.Default()
-	r.POST("/v1/user/login", loginHandl)
+	r.POST("/v1/user/login", RequirePayload(), loginHandl)
 
 	const testingRole = "PARTICIPANT"
 
@@ -271,13 +274,13 @@ func TestLoginParticipant(t *testing.T) {
 		w := performRequest(r, req)
 
 		// Convert the JSON response to a map
-		var response map[string]string
+		var response map[string]interface{}
 		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
 			t.Errorf("error parsing response body: %s", err.Error())
 		}
 
 		_, tokenExists := response["token"]
-		roleValue, roleExists := response["role"]
+		roleValue, roleExists := response["authenticated_role"]
 		if w.Code != http.StatusOK || !tokenExists || !roleExists || roleValue != testingRole {
 			t.Errorf("status code: %d", w.Code)
 			t.Errorf("response content: %s", w.Body.String())
@@ -302,13 +305,13 @@ func TestLoginParticipant(t *testing.T) {
 		w := performRequest(r, req)
 
 		// Convert the JSON response to a map
-		var response map[string]string
+		var response map[string]interface{}
 		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
 			t.Errorf("error parsing response body: %s", err.Error())
 		}
 
 		_, tokenExists := response["token"]
-		roleValue, roleExists := response["role"]
+		roleValue, roleExists := response["authenticated_role"]
 		if w.Code != http.StatusOK || !tokenExists || !roleExists || roleValue != testingRole {
 			t.Errorf("status code: %d", w.Code)
 			t.Errorf("response content: %s", w.Body.String())
@@ -331,7 +334,7 @@ func TestLoginParticipant(t *testing.T) {
 		w := performRequest(r, req)
 
 		// Convert the JSON response to a map
-		var response map[string]string
+		var response map[string]interface{}
 		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
 			t.Errorf("error parsing response body: %s", err.Error())
 		}
@@ -347,7 +350,7 @@ func TestLoginParticipant(t *testing.T) {
 
 func TestLoginResearcher(t *testing.T) {
 	r := gin.Default()
-	r.POST("/v1/user/login", loginHandl)
+	r.POST("/v1/user/login", RequirePayload(), loginHandl)
 
 	const testingRole = "RESEARCHER"
 
@@ -368,7 +371,7 @@ func TestLoginResearcher(t *testing.T) {
 		w := performRequest(r, req)
 
 		// Convert the JSON response to a map
-		var response map[string]string
+		var response map[string]interface{}
 		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
 			t.Errorf("error parsing response body: %s", err.Error())
 		}
@@ -398,13 +401,13 @@ func TestLoginResearcher(t *testing.T) {
 		w := performRequest(r, req)
 
 		// Convert the JSON response to a map
-		var response map[string]string
+		var response map[string]interface{}
 		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
 			t.Errorf("error parsing response body: %s", err.Error())
 		}
 
 		_, tokenExists := response["token"]
-		roleValue, roleExists := response["role"]
+		roleValue, roleExists := response["authenticated_role"]
 		if w.Code != http.StatusOK || !tokenExists || !roleExists || roleValue != testingRole {
 			t.Errorf("status code: %d", w.Code)
 			t.Errorf("response content: %s", w.Body.String())
@@ -415,7 +418,7 @@ func TestLoginResearcher(t *testing.T) {
 
 func TestLoginAdmin(t *testing.T) {
 	r := gin.Default()
-	r.POST("/v1/user/login", loginHandl)
+	r.POST("/v1/user/login", RequirePayload(), loginHandl)
 
 	const testingRole = "ADMIN"
 
@@ -436,7 +439,7 @@ func TestLoginAdmin(t *testing.T) {
 		w := performRequest(r, req)
 
 		// Convert the JSON response to a map
-		var response map[string]string
+		var response map[string]interface{}
 		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
 			t.Errorf("error parsing response body: %s", err.Error())
 		}
@@ -466,13 +469,13 @@ func TestLoginAdmin(t *testing.T) {
 		w := performRequest(r, req)
 
 		// Convert the JSON response to a map
-		var response map[string]string
+		var response map[string]interface{}
 		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
 			t.Errorf("error parsing response body: %s", err.Error())
 		}
 
 		_, tokenExists := response["token"]
-		roleValue, roleExists := response["role"]
+		roleValue, roleExists := response["authenticated_role"]
 		if w.Code != http.StatusOK || !tokenExists || !roleExists || roleValue != testingRole {
 			t.Errorf("status code: %d", w.Code)
 			t.Errorf("response content: %s", w.Body.String())
@@ -483,7 +486,7 @@ func TestLoginAdmin(t *testing.T) {
 
 func TestSignup(t *testing.T) {
 	r := gin.Default()
-	r.POST("/v1/user/signup", signupHandl)
+	r.POST("/v1/user/signup", RequirePayload(), signupHandl)
 
 	const testingRole = "PARTICIPANT"
 
@@ -495,7 +498,7 @@ func TestSignup(t *testing.T) {
 		w := performRequest(r, req)
 
 		// Convert the JSON response to a map
-		var response map[string]string
+		var response map[string]interface{}
 		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
 			t.Errorf("error parsing response body: %s", err.Error())
 		}
@@ -524,13 +527,13 @@ func TestSignup(t *testing.T) {
 		w := performRequest(r, req)
 
 		// Convert the JSON response to a map
-		var response map[string]string
+		var response map[string]interface{}
 		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
 			t.Errorf("error parsing response body: %s", err.Error())
 		}
 
 		_, tokenExists := response["token"]
-		roleValue, roleExists := response["role"]
+		roleValue, roleExists := response["authenticated_role"]
 		if w.Code != http.StatusCreated || !tokenExists || !roleExists || roleValue != testingRole {
 			t.Errorf("status code: %d", w.Code)
 			t.Errorf("response content: %s", w.Body.String())
@@ -553,7 +556,7 @@ func TestSignup(t *testing.T) {
 		w := performRequest(r, req)
 
 		// Convert the JSON response to a map
-		var response map[string]string
+		var response map[string]interface{}
 		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
 			t.Errorf("error parsing response body: %s", err.Error())
 		}
@@ -569,7 +572,7 @@ func TestSignup(t *testing.T) {
 
 func getTokenForParticipant() string {
 	r := gin.Default()
-	r.POST("/v1/user/login", loginHandl)
+	r.POST("/v1/user/login", RequirePayload(), loginHandl)
 
 	loginData := &userCredentials{
 		Email:    "test-p1@test.com",
@@ -582,12 +585,12 @@ func getTokenForParticipant() string {
 	w := performRequest(r, req)
 
 	// Convert the JSON response to a map
-	var response map[string]string
+	var response map[string]interface{}
 	if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
 		log.Fatal(err.Error())
 	}
 
-	value, _ := response["token"]
+	value, _ := response["token"].(string)
 	return value
 }
 
@@ -596,7 +599,7 @@ func TestValidateToken(t *testing.T) {
 	minTokenAge = time.Second * 1
 
 	r := gin.Default()
-	r.GET("/v1/token/validate", validateTokenHandl)
+	r.GET("/v1/token/validate", ExtractToken(), validateTokenHandl)
 
 	// Test without token
 	t.Run("Testing without token", func(t *testing.T) {
@@ -604,7 +607,7 @@ func TestValidateToken(t *testing.T) {
 		w := performRequest(r, req)
 
 		// Convert the JSON response to a map
-		var response map[string]string
+		var response map[string]interface{}
 		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
 			t.Errorf("error parsing response body: %s", err.Error())
 		}
@@ -624,7 +627,7 @@ func TestValidateToken(t *testing.T) {
 		w := performRequest(r, req)
 
 		// Convert the JSON response to a map
-		var response map[string]string
+		var response map[string]interface{}
 		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
 			t.Errorf("error parsing response body: %s", err.Error())
 		}
@@ -646,7 +649,7 @@ func TestValidateToken(t *testing.T) {
 		w := performRequest(r, req)
 
 		// Convert the JSON response to a map
-		var response map[string]string
+		var response map[string]interface{}
 		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
 			t.Errorf("error parsing response body: %s", err.Error())
 		}
@@ -690,7 +693,7 @@ func TestValidateToken(t *testing.T) {
 		w := performRequest(r, req)
 
 		// Convert the JSON response to a map
-		var response map[string]string
+		var response map[string]interface{}
 		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
 			t.Errorf("error parsing response body: %s", err.Error())
 		}
@@ -709,7 +712,7 @@ func TestRenewToken(t *testing.T) {
 	minTokenAge = time.Second * 1
 
 	r := gin.Default()
-	r.GET("/v1/token/renew", renewTokenHandl)
+	r.GET("/v1/token/renew", ExtractToken(), renewTokenHandl)
 
 	// Test without token
 	t.Run("Testing renew token without token", func(t *testing.T) {
@@ -718,7 +721,7 @@ func TestRenewToken(t *testing.T) {
 		w := performRequest(r, req)
 
 		// Convert the JSON response to a map
-		var response map[string]string
+		var response map[string]interface{}
 		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
 			t.Errorf("error parsing response body: %s", err.Error())
 		}
@@ -738,7 +741,7 @@ func TestRenewToken(t *testing.T) {
 		w := performRequest(r, req)
 
 		// Convert the JSON response to a map
-		var response map[string]string
+		var response map[string]interface{}
 		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
 			t.Errorf("error parsing response body: %s", err.Error())
 		}
@@ -760,7 +763,7 @@ func TestRenewToken(t *testing.T) {
 		w := performRequest(r, req)
 
 		// Convert the JSON response to a map
-		var response map[string]string
+		var response map[string]interface{}
 		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
 			t.Errorf("error parsing response body: %s", err.Error())
 		}
@@ -783,7 +786,7 @@ func TestRenewToken(t *testing.T) {
 		w := performRequest(r, req)
 
 		// Convert the JSON response to a map
-		var response map[string]string
+		var response map[string]interface{}
 		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
 			t.Errorf("error parsing response body: %s", err.Error())
 		}
@@ -809,7 +812,7 @@ func TestRenewToken(t *testing.T) {
 		w := performRequest(r, req)
 
 		// Convert the JSON response to a map
-		var response map[string]string
+		var response map[string]interface{}
 		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
 			t.Errorf("error parsing response body: %s", err.Error())
 		}
@@ -830,7 +833,7 @@ func TestRenewToken(t *testing.T) {
 		w := performRequest(r, req)
 
 		// Convert the JSON response to a map
-		var response map[string]string
+		var response map[string]interface{}
 		if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
 			t.Errorf("error parsing response body: %s", err.Error())
 		}

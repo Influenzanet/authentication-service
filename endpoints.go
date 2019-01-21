@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -20,13 +19,15 @@ type userCredentials struct {
 
 // UserLoginResponse holds id and role the user is authenticated for
 type UserLoginResponse struct {
-	ID   string `json:"user_id"`
-	Role string `json:"role"`
+	ID                string   `json:"user_id"`
+	Roles             []string `json:"roles"`
+	AuthenticatedRole string   `json:"authenticated_role"`
 }
 
 type userSignupResponse struct {
-	ID   string `json:"user_id"`
-	Role string `json:"role"`
+	ID                string   `json:"user_id"`
+	Roles             []string `json:"roles"`
+	AuthenticatedRole string   `json:"authenticated_role"`
 }
 
 type errorResponse struct {
@@ -34,8 +35,9 @@ type errorResponse struct {
 }
 
 type tokenMessage struct {
-	Token string `json:"token"`
-	Role  string `json:"role"`
+	Token             string   `json:"token"`
+	Roles             []string `json:"roles"`
+	AuthenticatedRole string   `json:"authenticated_role"`
 }
 
 func checkTokenAgeMaturity(issuedAt int64) bool {
@@ -44,10 +46,6 @@ func checkTokenAgeMaturity(issuedAt int64) bool {
 
 func loginHandl(context *gin.Context) {
 	var creds userCredentials
-	if context.Request.ContentLength == 0 {
-		context.JSON(http.StatusBadRequest, gin.H{"error": "payload missing"})
-		return
-	}
 
 	if err := context.ShouldBindJSON(&creds); err != nil {
 		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -64,12 +62,16 @@ func loginHandl(context *gin.Context) {
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		respBody, err := ioutil.ReadAll(resp.Body)
-		currentError := errorResponse{}
-		jsonErr := json.Unmarshal(respBody, &currentError)
-		if jsonErr != nil {
+		if err != nil {
 			context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
+		currentError := errorResponse{}
+		if jsonErr := json.Unmarshal(respBody, &currentError); jsonErr != nil {
+			context.JSON(http.StatusInternalServerError, gin.H{"error": jsonErr.Error()})
+			return
+		}
+
 		context.JSON(resp.StatusCode, currentError)
 		return
 	}
@@ -82,7 +84,7 @@ func loginHandl(context *gin.Context) {
 		return
 	}
 
-	token, err := generateNewToken(currentUser.ID, currentUser.Role)
+	token, err := generateNewToken(currentUser.ID, currentUser.Roles, currentUser.AuthenticatedRole)
 	if err != nil {
 		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -90,18 +92,15 @@ func loginHandl(context *gin.Context) {
 
 	// Send response
 	tokenResp := tokenMessage{
-		Token: token,
-		Role:  currentUser.Role,
+		Token:             token,
+		Roles:             currentUser.Roles,
+		AuthenticatedRole: currentUser.AuthenticatedRole,
 	}
 	context.JSON(http.StatusOK, tokenResp)
 }
 
 func signupHandl(context *gin.Context) {
 	var creds userCredentials
-	if context.Request.ContentLength == 0 {
-		context.JSON(http.StatusBadRequest, gin.H{"error": "payload missing"})
-		return
-	}
 
 	if err := context.ShouldBindJSON(&creds); err != nil {
 		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -118,12 +117,16 @@ func signupHandl(context *gin.Context) {
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusCreated {
 		respBody, err := ioutil.ReadAll(resp.Body)
-		currentError := errorResponse{}
-		jsonErr := json.Unmarshal(respBody, &currentError)
-		if jsonErr != nil {
+		if err != nil {
 			context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
+		currentError := errorResponse{}
+		if jsonErr := json.Unmarshal(respBody, &currentError); jsonErr != nil {
+			context.JSON(http.StatusInternalServerError, gin.H{"error": jsonErr.Error()})
+			return
+		}
+
 		context.JSON(resp.StatusCode, currentError)
 		return
 	}
@@ -136,7 +139,7 @@ func signupHandl(context *gin.Context) {
 		return
 	}
 
-	token, err := generateNewToken(currentUser.ID, currentUser.Role)
+	token, err := generateNewToken(currentUser.ID, currentUser.Roles, currentUser.AuthenticatedRole)
 	if err != nil {
 		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -144,29 +147,15 @@ func signupHandl(context *gin.Context) {
 
 	// Send response
 	tokenResp := tokenMessage{
-		Token: token,
-		Role:  currentUser.Role,
+		Token:             token,
+		Roles:             currentUser.Roles,
+		AuthenticatedRole: currentUser.AuthenticatedRole,
 	}
 	context.JSON(http.StatusCreated, tokenResp)
 }
 
 func validateTokenHandl(context *gin.Context) {
-	req := context.Request
-
-	// Get token string from header field
-	var token string
-	tokens, ok := req.Header["Authorization"]
-	if ok && len(tokens) >= 1 {
-		token = tokens[0]
-		token = strings.TrimPrefix(token, "Bearer ")
-		if len(token) == 0 {
-			context.JSON(http.StatusBadRequest, gin.H{"error": "no Authorization token found"})
-			return
-		}
-	} else {
-		context.JSON(http.StatusBadRequest, gin.H{"error": "no Authorization token found"})
-		return
-	}
+	token := context.MustGet("encodedToken").(string)
 
 	// Parse and validate token
 	parsedToken, ok, oldKey, err := validateToken(token)
@@ -188,22 +177,7 @@ func validateTokenHandl(context *gin.Context) {
 }
 
 func renewTokenHandl(context *gin.Context) {
-	req := context.Request
-
-	// Get token string from header field
-	var token string
-	tokens, ok := req.Header["Authorization"]
-	if ok && len(tokens) >= 1 {
-		token = tokens[0]
-		token = strings.TrimPrefix(token, "Bearer ")
-		if len(token) == 0 {
-			context.JSON(http.StatusBadRequest, gin.H{"error": "no Authorization token found"})
-			return
-		}
-	} else {
-		context.JSON(http.StatusBadRequest, gin.H{"error": "no Authorization token found"})
-		return
-	}
+	token := context.MustGet("encodedToken").(string)
 
 	// Parse and validate token
 	parsedToken, ok, _, err := validateToken(token)
@@ -223,7 +197,7 @@ func renewTokenHandl(context *gin.Context) {
 	}
 
 	// Generate new token:
-	newToken, err := generateNewToken(parsedToken.UserID, parsedToken.Role)
+	newToken, err := generateNewToken(parsedToken.UserID, parsedToken.Roles, parsedToken.AuthenticatedRole)
 	if err != nil {
 		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
