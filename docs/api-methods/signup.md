@@ -1,5 +1,5 @@
-**Signup**
-----
+# Signup
+
   Register a new user account with the given email address and password, if they match the validation criterias (valid email format and password at least 6 characters including letters and numbers).
 
 * **URL**
@@ -10,32 +10,34 @@
 
   `POST`
 
-*  **URL Params**
+* **URL Params**
+
   * None
 
 * **Data Params**
+
   **Required:**
-  * **Type:** application/json <br />
+
+  * **Type:** application/json  
     **Content:** `{ "email": "<user email>", "password": "<user password>"}`
 
 * **Success Response:**
 
-  * **Code:** 200 <br />
-    **Content:** `{ "token": "<token string>", "role": "PARTICIPANT" }`
+  * **Code:** 201  
+    **Content:** `{ "token": "<token string>", "roles": [ "PARTICIPANT" ], "authenticated_role": "PARTICIPANT" }`
 
 * **Error Response:**
 
-  * **Code:** 400 Bad request <br />
-    **Content:** `{ "error" : "<error message>" }` <br />
+  * **Code:** 400 Bad Request  
+    **Content:** `{ "error" : "<error message>" }`  
     **Typical reason:** Data format (json body of the Post request) wrong, e.g. missing key for email or password.
 
-  * **Code:** 400 Bad request <br />
-    **Content:** `{ "error" : "email address already in use" }` <br />
-    **Typical reason:** Email address already used for an other account.
-
-  * **Code:** 500 Internal server error <br />
-    **Content:** `{ "error" : "<error message>" }` <br />
+  * **Code:** 500 Internal Server Error  
+    **Content:** `{ "error" : "<error message>" }`  
     **Typical reason:** Something went wrong during the token generation. User's input are ok, but method failed generating a valid token, e.g. because signing key is not available.
+
+  **Forwarded Responses from:**  
+  [User-Management Service](https://github.com/Influenzanet/user-management-service/blob/master/docs/api-methods/signup.md)
 
 * **Sample Call:**
 
@@ -48,5 +50,7 @@
     resp, err := http.Post(auth-service-addr + "/v1/user/signup", "application/json", bytes.NewBuffer(payload))
     defer resp.Body.Close()
   ```
+
 * **Notes:**
-  * None
+
+  None

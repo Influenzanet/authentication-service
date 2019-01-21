@@ -1,5 +1,5 @@
-**Login**
-----
+# Login
+
   Check email and password for a user, check if the user has the required role, and return a token if credentials are correct.
 
 * **URL**
@@ -10,35 +10,31 @@
 
   `POST`
 
-*  **URL Params:**
-   * None
+* **URL Params:**
+
+  * None
 
 * **Data Params:**
-  * **Type:** application/json <br />
+  * **Type:** application/json  
     **Content:** `{ "email": "<user email>", "password": "<user password>", "?role": "PARTICIPANT" | "RESEARCHER" | "ADMIN" }`
 
 * **Success Response:**
 
-  * **Code:** 200 <br />
-    **Content:** `{ "token": "<token string>", "role": "PARTICIPANT" | "RESEARCHER" | "ADMIN" }`
+  * **Code:** 200  
+    **Content:** `{ "token": "<token string>", "roles": [ <user roles> ], "authenticated_role": "PARTICIPANT" | "RESEARCHER" | "ADMIN" | ? }`
 
 * **Error Response:**
 
-  * **Code:** 400 Bad request <br />
-    **Content:** `{ "error" : "<error message>" }` <br />
+  * **Code:** 400 Bad Request  
+    **Content:** `{ "error" : "<error message>" }`  
     **Typical reason:** Data format (json body of the Post request) wrong, e.g. missing key for email or password.
 
-  * **Code:** 401 Unauthorized <br />
-    **Content:** `{ "error" : "<error message>" }` <br />
-    **Typical reason:** Email or password wrong or doesn't belong to any registered participant.
-
-  * **Code:** 403 Forbidden <br />
-    **Content:** `{ "error" : "<error message>" }` <br />
-    **Typical reason:** The account does not have the role for which authorization was requested.
-
-  * **Code:** 500 Internal server error <br />
-    **Content:** `{ "error" : "<error message>" }` <br />
+  * **Code:** 500 Internal Server Error  
+    **Content:** `{ "error" : "<error message>" }`  
     **Typical reason:** Something went wrong during the token generation. User's credentials are ok, but method failed generating a valid token, e.g. because signing key is not available.
+
+  **Forwarded Responses from:**  
+  [User-Management Service](https://github.com/Influenzanet/user-management-service/blob/master/docs/api-methods/login.md)
 
 * **Sample Call:**
 
@@ -54,4 +50,5 @@
   ```
 
 * **Notes:**
-  * If not specified `role` defaults to `"PARTICIPANT"`.
+
+  If not specified `role` defaults to `"PARTICIPANT"`.
