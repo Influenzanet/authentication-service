@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 
+	middlewares "github.com/Influenzanet/middlewares"
 	"github.com/gin-gonic/gin"
 )
 
@@ -20,12 +21,12 @@ func main() {
 	v1 := router.Group("/v1")
 	{
 		userHandles := v1.Group("/user")
-		userHandles.Use(RequirePayload())
+		userHandles.Use(middlewares.RequirePayload())
 		userHandles.POST("/login", loginHandl)
 		userHandles.POST("/signup", signupHandl)
 
 		tokenHandles := v1.Group("/token")
-		tokenHandles.Use(ExtractToken())
+		tokenHandles.Use(middlewares.ExtractToken())
 		tokenHandles.GET("/validate", validateTokenHandl)
 		tokenHandles.GET("/renew", renewTokenHandl)
 	}

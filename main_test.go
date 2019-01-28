@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	middlewares "github.com/Influenzanet/middlewares"
 	"github.com/gin-gonic/gin"
 )
 
@@ -177,7 +178,7 @@ func performRequest(r http.Handler, req *http.Request) *httptest.ResponseRecorde
 
 func TestLoginParticipant(t *testing.T) {
 	r := gin.Default()
-	r.POST("/v1/user/login", RequirePayload(), loginHandl)
+	r.POST("/v1/user/login", middlewares.RequirePayload(), loginHandl)
 
 	const testingRole = "PARTICIPANT"
 
@@ -350,7 +351,7 @@ func TestLoginParticipant(t *testing.T) {
 
 func TestLoginResearcher(t *testing.T) {
 	r := gin.Default()
-	r.POST("/v1/user/login", RequirePayload(), loginHandl)
+	r.POST("/v1/user/login", middlewares.RequirePayload(), loginHandl)
 
 	const testingRole = "RESEARCHER"
 
@@ -418,7 +419,7 @@ func TestLoginResearcher(t *testing.T) {
 
 func TestLoginAdmin(t *testing.T) {
 	r := gin.Default()
-	r.POST("/v1/user/login", RequirePayload(), loginHandl)
+	r.POST("/v1/user/login", middlewares.RequirePayload(), loginHandl)
 
 	const testingRole = "ADMIN"
 
@@ -486,7 +487,7 @@ func TestLoginAdmin(t *testing.T) {
 
 func TestSignup(t *testing.T) {
 	r := gin.Default()
-	r.POST("/v1/user/signup", RequirePayload(), signupHandl)
+	r.POST("/v1/user/signup", middlewares.RequirePayload(), signupHandl)
 
 	const testingRole = "PARTICIPANT"
 
@@ -572,7 +573,7 @@ func TestSignup(t *testing.T) {
 
 func getTokenForParticipant() string {
 	r := gin.Default()
-	r.POST("/v1/user/login", RequirePayload(), loginHandl)
+	r.POST("/v1/user/login", middlewares.RequirePayload(), loginHandl)
 
 	loginData := &userCredentials{
 		Email:    "test-p1@test.com",
@@ -599,7 +600,7 @@ func TestValidateToken(t *testing.T) {
 	minTokenAge = time.Second * 1
 
 	r := gin.Default()
-	r.GET("/v1/token/validate", ExtractToken(), validateTokenHandl)
+	r.GET("/v1/token/validate", middlewares.ExtractToken(), validateTokenHandl)
 
 	// Test without token
 	t.Run("Testing without token", func(t *testing.T) {
@@ -712,7 +713,7 @@ func TestRenewToken(t *testing.T) {
 	minTokenAge = time.Second * 1
 
 	r := gin.Default()
-	r.GET("/v1/token/renew", ExtractToken(), renewTokenHandl)
+	r.GET("/v1/token/renew", middlewares.ExtractToken(), renewTokenHandl)
 
 	// Test without token
 	t.Run("Testing renew token without token", func(t *testing.T) {

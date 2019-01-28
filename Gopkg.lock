@@ -2,6 +2,14 @@
 
 
 [[projects]]
+  branch = "master"
+  digest = "1:e8bde54cd747346a667f4425a0b9e7b8ed266702fa2d5ea30c5e0a0b8c8e8f3d"
+  name = "github.com/Influenzanet/middlewares"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "053963bc675f6ee4628248706072417e590314ea"
+
+[[projects]]
   digest = "1:76dc72490af7174349349838f2fe118996381b31ea83243812a97e5a0fd5ed55"
   name = "github.com/dgrijalva/jwt-go"
   packages = ["."]
@@ -86,6 +94,7 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/Influenzanet/middlewares",
     "github.com/dgrijalva/jwt-go",
     "github.com/gin-gonic/gin",
   ]
