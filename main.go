@@ -2,34 +2,42 @@ package main
 
 import (
 	"log"
+	"net"
+	"strconv"
 
-	middlewares "github.com/Influenzanet/middlewares"
-	"github.com/gin-gonic/gin"
+	auth_api "github.com/Influenzanet/api/dist/go/auth-service"
+	user_api "github.com/Influenzanet/api/dist/go/user-management"
+	"google.golang.org/grpc"
 )
 
-var userManagementServer = "http://user-management:3200/v1"
+type authServiceServer struct {
+}
+
+var userManagementClient user_api.UserManagementApiClient
+
+func connectToUserManagementServer() *grpc.ClientConn {
+	conn, err := grpc.Dial(conf.ServiceURLs.UserManagement, grpc.WithInsecure())
+	if err != nil {
+		log.Fatalf("failed to connect: %v", err)
+	}
+	return conn
+}
 
 func init() {
-	gin.SetMode(gin.ReleaseMode)
+	readConfig()
 }
 
 func main() {
-	log.Println("Hello World")
+	userManagementServerConn := connectToUserManagementServer()
+	defer userManagementServerConn.Close()
 
-	router := gin.Default()
+	userManagementClient = user_api.NewUserManagementApiClient(userManagementServerConn)
 
-	v1 := router.Group("/v1")
-	{
-		userHandles := v1.Group("/user")
-		userHandles.Use(middlewares.RequirePayload())
-		userHandles.POST("/login", loginHandl)
-		userHandles.POST("/signup", signupHandl)
-
-		tokenHandles := v1.Group("/token")
-		tokenHandles.Use(middlewares.ExtractToken())
-		tokenHandles.GET("/validate", validateTokenHandl)
-		tokenHandles.GET("/renew", renewTokenHandl)
+	lis, err := net.Listen("tcp", ":"+strconv.Itoa(conf.ListenPort))
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
 	}
-
-	log.Fatal(router.Run(":3100"))
+	grpcServer := grpc.NewServer()
+	auth_api.RegisterAuthServiceApiServer(grpcServer, &authServiceServer{})
+	grpcServer.Serve(lis)
 }

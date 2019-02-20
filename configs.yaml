@@ -1,0 +1,3 @@
+list_port: 3201
+service_urls:
+  user_management: "localhost:3200"

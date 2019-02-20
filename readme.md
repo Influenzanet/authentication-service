@@ -16,6 +16,18 @@ To perform a full test, call:
 go test
 ```
 
+The tests use the gomock library. To install this use:
+```
+go get github.com/golang/mock/gomock
+go install github.com/golang/mock/mockgen
+```
+
+Then generate mock client for the user management service:
+```
+mockgen github.com/Influenzanet/api/dist/go/user-management UserManagementApiClient > mock_user_management/um_mock.go
+```
+For more information about testing grpc clients with go check: https://github.com/grpc/grpc-go/blob/master/Documentation/gomock-example.md
+
 ## Build
 
 The included `Dockerfile` should provide everything needed to build and run the application.
