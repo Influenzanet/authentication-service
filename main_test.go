@@ -182,82 +182,127 @@ func TestLoginWithEmail(t *testing.T) {
 }
 
 func TestSignup(t *testing.T) {
-	t.Errorf("test not implemented")
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	mockUserManagementClient := um_mock.NewMockUserManagementApiClient(mockCtrl)
+	userManagementClient = mockUserManagementClient
 
-	/*
-			r := gin.Default()
-			r.POST("/v1/user/signup", middlewares.RequirePayload(), signupHandl)
+	s := authServiceServer{}
 
-			t.Run("Testing without payload", func(t *testing.T) {
-				req, _ := http.NewRequest("POST", "/v1/user/signup", nil)
-				w := performRequest(r, req)
+	t.Run("Testing signup without payload", func(t *testing.T) {
+		resp, err := s.SignupWithEmail(context.Background(), nil)
+		if err == nil || err.Error() != "missing arguments" || resp != nil {
+			t.Errorf("wrong error: %s", err.Error())
+			t.Errorf("or response: %s", resp)
+			return
+		}
+	})
 
-				// Convert the JSON response to a map
-				var response map[string]interface{}
-				if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
-					t.Errorf("error parsing response body: %s", err.Error())
-				}
+	t.Run("Testing signup with empty payload", func(t *testing.T) {
+		req := &user_api.NewUser{}
 
-				value, exists := response["error"]
-				if w.Code != http.StatusBadRequest || !exists || value != "payload missing" {
-					t.Errorf("status code: %d", w.Code)
-					t.Errorf("response content: %s", w.Body.String())
-					return
-				}
-			})
+		resp, err := s.SignupWithEmail(context.Background(), req)
+		if err == nil || err.Error() != "missing arguments" || resp != nil {
+			t.Errorf("wrong error: %s", err.Error())
+			t.Errorf("or response: %s", resp)
+			return
+		}
+	})
 
-		t.Run("Testing signup with email and password", func(t *testing.T) {
-			t.Logf("Testing signup with email and password")
-			loginData := &userCredentials{
-				Email:    "test-s1@test.com",
-				Password: "testpassword",
-			}
-			loginPayload, _ := json.Marshal(loginData)
+	t.Run("Testing signup with too short password", func(t *testing.T) {
+		req := &user_api.NewUser{
+			Auth: &influenzanet.UserCredentials{
+				Email:      "test@test.com",
+				Password:   "short",
+				InstanceId: "test-inst",
+			},
+			Profile: &user_api.Profile{},
+		}
+		mockUserManagementClient.EXPECT().SignupWithEmail(
+			gomock.Any(),
+			gomock.Any(),
+		).Return(nil, errors.New("password too weak"))
 
-			req, _ := http.NewRequest("POST", "/v1/user/signup", bytes.NewBuffer(loginPayload))
-			req.Header.Add("Content-Type", "application/json")
-			w := performRequest(r, req)
+		resp, err := s.SignupWithEmail(context.Background(), req)
+		if err == nil || err.Error() != "password too weak" || resp != nil {
+			t.Errorf("wrong error: %s", err.Error())
+			t.Errorf("or response: %s", resp)
+			return
+		}
+	})
 
-			// Convert the JSON response to a map
-			var response map[string]interface{}
-			if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
-				t.Errorf("error parsing response body: %s", err.Error())
-			}
+	t.Run("Testing signup with invalid email", func(t *testing.T) {
+		req := &user_api.NewUser{
+			Auth: &influenzanet.UserCredentials{
+				Email:      "test-test.com",
+				Password:   "short",
+				InstanceId: "test-inst",
+			},
+			Profile: &user_api.Profile{},
+		}
+		mockUserManagementClient.EXPECT().SignupWithEmail(
+			gomock.Any(),
+			gomock.Any(),
+		).Return(nil, errors.New("email not valid"))
 
-			_, tokenExists := response["token"]
-			roleValue, roleExists := response["authenticated_role"]
-			if w.Code != http.StatusCreated || !tokenExists || !roleExists || roleValue != testingRole {
-				t.Errorf("status code: %d", w.Code)
-				t.Errorf("response content: %s", w.Body.String())
-				return
-			}
-		})
+		resp, err := s.SignupWithEmail(context.Background(), req)
+		if err == nil || err.Error() != "email not valid" || resp != nil {
+			t.Errorf("wrong error: %s", err.Error())
+			t.Errorf("or response: %s", resp)
+			return
+		}
+	})
 
-		t.Run("Testing signup with missing required fields", func(t *testing.T) {
-			loginData := &userCredentials{
-				Email:    "",
-				Password: "",
-			}
-			loginPayload, _ := json.Marshal(loginData)
+	t.Run("Testing signup with existing user", func(t *testing.T) {
+		req := &user_api.NewUser{
+			Auth: &influenzanet.UserCredentials{
+				Email:      "test@test.com",
+				Password:   "short",
+				InstanceId: "test-inst",
+			},
+			Profile: &user_api.Profile{},
+		}
+		mockUserManagementClient.EXPECT().SignupWithEmail(
+			gomock.Any(),
+			gomock.Any(),
+		).Return(nil, errors.New("user already exists"))
 
-			req, _ := http.NewRequest("POST", "/v1/user/signup", bytes.NewBuffer(loginPayload))
-			req.Header.Add("Content-Type", "application/json")
-			w := performRequest(r, req)
+		resp, err := s.SignupWithEmail(context.Background(), req)
+		if err == nil || err.Error() != "user already exists" || resp != nil {
+			t.Errorf("wrong error: %s", err.Error())
+			t.Errorf("or response: %s", resp)
+			return
+		}
+	})
 
-			// Convert the JSON response to a map
-			var response map[string]interface{}
-			if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
-				t.Errorf("error parsing response body: %s", err.Error())
-			}
+	t.Run("Testing signup with valid arguments", func(t *testing.T) {
+		req := &user_api.NewUser{
+			Auth: &influenzanet.UserCredentials{
+				Email:      "test@test.com",
+				Password:   "short",
+				InstanceId: "test-inst",
+			},
+			Profile: &user_api.Profile{},
+		}
 
-			_, exists := response["error"]
-			if w.Code != http.StatusBadRequest || !exists {
-				t.Errorf("status code: %d", w.Code)
-				t.Errorf("response content: %s", w.Body.String())
-				return
-			}
-		})
-	*/
+		mockUserManagementClient.EXPECT().SignupWithEmail(
+			gomock.Any(),
+			gomock.Any(),
+		).Return(&user_api.UserAuthInfo{
+			UserId:     "testid",
+			Roles:      []string{"participant"},
+			InstanceId: "test-inst",
+		}, nil)
+
+		resp, err := s.SignupWithEmail(context.Background(), req)
+		if err != nil {
+			t.Errorf("unexpected error: %s", err.Error())
+			return
+		}
+		if len(resp.Token) < 1 {
+			t.Errorf("unexpected response: %s", resp)
+		}
+	})
 }
 
 /*

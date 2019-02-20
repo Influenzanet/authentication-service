@@ -10,6 +10,7 @@ import (
 
 	influenzanet "github.com/Influenzanet/api/dist/go"
 	auth_api "github.com/Influenzanet/api/dist/go/auth-service"
+	user_api "github.com/Influenzanet/api/dist/go/user-management"
 )
 
 func checkTokenAgeMaturity(issuedAt int64) bool {
@@ -40,66 +41,25 @@ func (s *authServiceServer) LoginWithEmail(ctx context.Context, req *influenzane
 	}, nil
 }
 
-func (s *authServiceServer) SignupWithEmail(ctx context.Context, req *influenzanet.UserCredentials) (*auth_api.EncodedToken, error) {
-	return nil, errors.New("not implemented")
-}
-
-/*
-func signupHandl(context *gin.Context) {
-	var creds userCredentials
-
-	if err := context.ShouldBindJSON(&creds); err != nil {
-		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
+func (s *authServiceServer) SignupWithEmail(ctx context.Context, req *user_api.NewUser) (*auth_api.EncodedToken, error) {
+	if req == nil || req.Auth == nil || req.Profile == nil {
+		return nil, errors.New("missing arguments")
 	}
-
-	payload, err := json.Marshal(creds)
-
-	resp, err := http.Post(userManagementServer+"/signup", "application/json", bytes.NewBuffer(payload))
+	resp, err := userManagementClient.SignupWithEmail(context.Background(), req)
 	if err != nil {
-		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusCreated {
-		respBody, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-		currentError := errorResponse{}
-		if jsonErr := json.Unmarshal(respBody, &currentError); jsonErr != nil {
-			context.JSON(http.StatusInternalServerError, gin.H{"error": jsonErr.Error()})
-			return
-		}
-
-		context.JSON(resp.StatusCode, currentError)
-		return
+		log.Printf("error during signup with email: %s", err.Error())
+		return nil, err
 	}
 
-	respBody, err := ioutil.ReadAll(resp.Body)
-	currentUser := userSignupResponse{}
-	jsonErr := json.Unmarshal(respBody, &currentUser)
-	if jsonErr != nil {
-		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	token, err := generateNewToken(currentUser.ID, currentUser.Roles, currentUser.AuthenticatedRole)
+	token, err := generateNewToken(resp.UserId, resp.Roles, resp.InstanceId)
 	if err != nil {
-		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
+		return nil, err
 	}
 
-	// Send response
-	tokenResp := tokenMessage{
-		Token:             token,
-		Roles:             currentUser.Roles,
-		AuthenticatedRole: currentUser.AuthenticatedRole,
-	}
-	context.JSON(http.StatusCreated, tokenResp)
+	return &auth_api.EncodedToken{
+		Token: token,
+	}, nil
 }
-*/
 
 func (s *authServiceServer) ValidateJWT(ctx context.Context, req *auth_api.EncodedToken) (*influenzanet.ParsedToken, error) {
 	return nil, errors.New("not implemented")
