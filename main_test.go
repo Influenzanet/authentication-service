@@ -5,10 +5,12 @@ import (
 	"errors"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
 
 	influenzanet "github.com/Influenzanet/api/dist/go"
+	auth_api "github.com/Influenzanet/api/dist/go/auth-service"
 	user_api "github.com/Influenzanet/api/dist/go/user-management"
 	um_mock "github.com/Influenzanet/authentication-service/mock_user_management"
 )
@@ -305,144 +307,101 @@ func TestSignup(t *testing.T) {
 	})
 }
 
-/*
-func getTokenForParticipant() string {
-	r := gin.Default()
-	r.POST("/v1/user/login", middlewares.RequirePayload(), loginHandl)
-
-	loginData := &userCredentials{
-		Email:    "test-p1@test.com",
-		Password: "testpassword",
-	}
-	loginPayload, _ := json.Marshal(loginData)
-
-	req, _ := http.NewRequest("POST", "/v1/user/login", bytes.NewBuffer(loginPayload))
-	req.Header.Add("Content-Type", "application/json")
-	w := performRequest(r, req)
-
-	// Convert the JSON response to a map
-	var response map[string]interface{}
-	if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
-		log.Fatal(err.Error())
-	}
-
-	value, _ := response["token"].(string)
-	return value
-}*/
-
 func TestValidateToken(t *testing.T) {
-	t.Errorf("test not implemented")
-	/*
-		tokenValidityPeriod = time.Second * 2
-		minTokenAge = time.Second * 1
+	tokenValidityPeriod = time.Second * 2
+	minTokenAge = time.Second * 1
 
-		r := gin.Default()
-		r.GET("/v1/token/validate", middlewares.ExtractToken(), validateTokenHandl)
+	s := authServiceServer{}
 
-		// Test without token
-		t.Run("Testing without token", func(t *testing.T) {
-			req, _ := http.NewRequest("GET", "/v1/token/validate", nil)
-			w := performRequest(r, req)
+	t.Run("Testing token validation without payload", func(t *testing.T) {
+		resp, err := s.ValidateJWT(context.Background(), nil)
+		if err == nil || err.Error() != "missing arguments" || resp != nil {
+			t.Errorf("wrong error: %s", err.Error())
+			t.Errorf("or response: %s", resp)
+			return
+		}
+	})
 
-			// Convert the JSON response to a map
-			var response map[string]interface{}
-			if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
-				t.Errorf("error parsing response body: %s", err.Error())
-			}
+	t.Run("Testing token validation with empty payload", func(t *testing.T) {
+		req := &auth_api.EncodedToken{}
 
-			_, exists := response["error"]
-			if w.Code != http.StatusBadRequest || !exists {
-				t.Errorf("status code: %d instead of %d", w.Code, http.StatusBadRequest)
-				t.Errorf("response content: %s", w.Body.String())
-				return
-			}
-		})
+		resp, err := s.ValidateJWT(context.Background(), req)
+		if err == nil || err.Error() != "missing arguments" || resp != nil {
+			t.Errorf("wrong error: %s", err.Error())
+			t.Errorf("or response: %s", resp)
+			return
+		}
+	})
 
-		// Test with empty token
-		t.Run("Test with empty token", func(t *testing.T) {
-			req, _ := http.NewRequest("GET", "/v1/token/validate", nil)
-			req.Header.Add("Authorization", "Bearer "+"")
-			w := performRequest(r, req)
+	adminToken, err1 := generateNewToken("test-admin-id", []string{"PARTICIPANT", "ADMIN"}, "test-instance")
+	userToken, err2 := generateNewToken("test-user-id", []string{"PARTICIPANT"}, "test-instance")
+	if err1 != nil || err2 != nil {
+		t.Errorf("unexpected error: %s or %s", err1, err2)
+		return
+	}
 
-			// Convert the JSON response to a map
-			var response map[string]interface{}
-			if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
-				t.Errorf("error parsing response body: %s", err.Error())
-			}
+	t.Run("Test token validation with wrong token", func(t *testing.T) {
+		req := &auth_api.EncodedToken{
+			Token: adminToken + "x",
+		}
 
-			_, exists := response["error"]
-			if w.Code != http.StatusBadRequest || !exists {
-				t.Errorf("status code: %d instead of %d", w.Code, http.StatusBadRequest)
-				t.Errorf("response content: %s", w.Body.String())
-				return
-			}
-		})
+		resp, err := s.ValidateJWT(context.Background(), req)
+		if err == nil || err.Error() != "invalid token" || resp != nil {
+			t.Errorf("wrong error: %s", err.Error())
+			t.Errorf("or response: %s", resp)
+			return
+		}
+	})
 
-		badToken := "eydfsdfsdffsdfsdf.w45345sdfsdvcsdsdf.435345fsdf-4rwefsdfsd" // "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJyb2xlIjoicGFydGljaXBhbnQiLCJleHAiOjE1Mzk0MTc0MzAsImlhdCI6MTUzOTQxNzQyNX0.klxofJLg5J31v7hKO7TbPrceBzyYlp9kIAJuotUmY11pk08Hnn2uHtuDfdqBWVtcI_lQ-vKiikVs5icrewyQOXMzTesQXI41SZvRdEQfit1MZ5syE0a2PODRFsizaqT5vqVN04ZzX_3iPEvSBP25wMy8R4dzYaY5XcR2heJWIxaNFd3w65UDa_mNk4u3Oem7XO1Ufn_-ay98XqAUg5Zo0TI9sk2WQF57pzXAlHMVmCMNW1bP_OPra9CCQb2pUm2sKJiAgWVOBVB4lz50VoTsoJimQoTc5UpF3SCujL-Yt5mh7d7EUvDkKoSuqd5Pc8iKHs1Ix9jSmtoLpPxmCAnepA"
+	t.Run("Test token validation with normal user token", func(t *testing.T) {
+		req := &auth_api.EncodedToken{
+			Token: userToken,
+		}
 
-		// Test with wrong Token
-		t.Run("Test with wrong Token", func(t *testing.T) {
-			req, _ := http.NewRequest("GET", "/v1/token/validate", nil)
-			req.Header.Add("Authorization", "Bearer "+badToken)
-			w := performRequest(r, req)
+		resp, err := s.ValidateJWT(context.Background(), req)
+		if err != nil {
+			t.Errorf("unexpected error: %s", err.Error())
+			return
+		}
+		if resp == nil || resp.InstanceId != "test-instance" ||
+			resp.UserId != "test-user-id" || len(resp.Roles) != 1 || resp.Roles[0] != "PARTICIPANT" {
+			t.Errorf("unexpected response: %s", resp)
+			return
+		}
+	})
 
-			// Convert the JSON response to a map
-			var response map[string]interface{}
-			if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
-				t.Errorf("error parsing response body: %s", err.Error())
-			}
+	t.Run("Test token validation with admin token", func(t *testing.T) {
+		req := &auth_api.EncodedToken{
+			Token: adminToken,
+		}
 
-			_, exists := response["error"]
-			if w.Code != http.StatusUnauthorized || !exists {
-				t.Errorf("status code: %d instead of %d", w.Code, http.StatusUnauthorized)
-				t.Errorf("response content: %s", w.Body.String())
-				return
-			}
-		})
+		resp, err := s.ValidateJWT(context.Background(), req)
+		if err != nil {
+			t.Errorf("unexpected error: %s", err.Error())
+			return
+		}
+		if resp == nil || len(resp.Roles) < 2 {
+			t.Errorf("unexpected response: %s", resp)
+			return
+		}
+	})
 
-		token := getTokenForParticipant()
+	if testing.Short() {
+		t.Skip("skipping waiting for token test in short mode, since it has to wait for token expiration.")
+	}
+	time.Sleep(tokenValidityPeriod + time.Second)
 
-		// Test with valid Token
-		t.Run("Test with valid Token", func(t *testing.T) {
-			req, _ := http.NewRequest("GET", "/v1/token/validate", nil)
-			req.Header.Add("Authorization", "Bearer "+token)
-			w := performRequest(r, req)
-
-			// Convert the JSON response to a map
-			var response map[string]interface{}
-			if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
-				t.Errorf("error parsing response body: %s", err.Error())
-			}
-
-			_, exists := response["token"]
-			if w.Code != http.StatusOK || !exists {
-				t.Errorf("status code: %d instead of %d", w.Code, http.StatusOK)
-				t.Errorf("response content: %s", w.Body.String())
-				return
-			}
-		})
-
-		time.Sleep(tokenValidityPeriod + time.Second)
-
-		// Test with expired Token
-		t.Run("Test with expired Token", func(t *testing.T) {
-			req, _ := http.NewRequest("GET", "/v1/token/validate", nil)
-			req.Header.Add("Authorization", "Bearer "+token)
-			w := performRequest(r, req)
-
-			// Convert the JSON response to a map
-			var response map[string]interface{}
-			if err := json.Unmarshal([]byte(w.Body.String()), &response); err != nil {
-				t.Errorf("error parsing response body: %s", err.Error())
-			}
-
-			_, exists := response["error"]
-			if w.Code != http.StatusUnauthorized || !exists {
-				t.Errorf("status code: %d instead of %d", w.Code, http.StatusUnauthorized)
-				t.Errorf("response content: %s", w.Body.String())
-				return
-			}
-		})*/
+	t.Run("Test with expired token", func(t *testing.T) {
+		req := &auth_api.EncodedToken{
+			Token: adminToken,
+		}
+		resp, err := s.ValidateJWT(context.Background(), req)
+		if err == nil || err.Error() != "invalid token" || resp != nil {
+			t.Errorf("wrong error: %s", err.Error())
+			t.Errorf("or response: %s", resp)
+			return
+		}
+	})
 }
 
 func TestRenewToken(t *testing.T) {
