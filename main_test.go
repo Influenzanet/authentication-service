@@ -8,77 +8,13 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
+	"google.golang.org/grpc/status"
 
 	influenzanet "github.com/Influenzanet/api/dist/go"
 	auth_api "github.com/Influenzanet/api/dist/go/auth-service"
 	user_api "github.com/Influenzanet/api/dist/go/user-management"
 	um_mock "github.com/Influenzanet/authentication-service/mock_user_management"
 )
-
-// UserModel holds information relevant for authentication
-type UserModel struct {
-	Email             string   `json:"email"`
-	Password          string   `json:"password"`
-	ID                string   `json:"user_id"`
-	Roles             []string `json:"roles"`
-	AuthenticatedRole string   `json:"authenticated_role"`
-}
-
-// HasRole checks whether the user has a specified role
-func (u UserModel) HasRole(role string) bool {
-	for _, v := range u.Roles {
-		if v == role {
-			return true
-		}
-	}
-	return false
-}
-
-// Mock user DB
-var userDB = []UserModel{
-	UserModel{
-		Email:    "test-p1@test.com",
-		Password: "testpassword", // is stored hashed on the real server
-		ID:       "1",
-		Roles:    []string{"PARTICIPANT"},
-	},
-	UserModel{
-		Email:    "test-p2@test.com",
-		Password: "testpassword2", // is stored hashed on the real server
-		ID:       "2",
-		Roles:    []string{"PARTICIPANT"},
-	},
-	UserModel{
-		Email:    "test-p3@test.com",
-		Password: "testpassword3", // is stored hashed on the real server
-		ID:       "3",
-		Roles:    []string{"PARTICIPANT"},
-	},
-	UserModel{
-		Email:    "test-r1@test.com",
-		Password: "testpassword4", // is stored hashed on the real server
-		ID:       "4",
-		Roles:    []string{"PARTICIPANT", "RESEARCHER"},
-	},
-	UserModel{
-		Email:    "test-r2@test.com",
-		Password: "testpassword5", // is stored hashed on the real server
-		ID:       "5",
-		Roles:    []string{"PARTICIPANT", "RESEARCHER"},
-	},
-	UserModel{
-		Email:    "test-a1@test.com",
-		Password: "testpassword6", // is stored hashed on the real server
-		ID:       "6",
-		Roles:    []string{"PARTICIPANT", "RESEARCHER", "ADMIN"},
-	},
-	UserModel{
-		Email:    "test-a2@test.com",
-		Password: "testpassword7", // is stored hashed on the real server
-		ID:       "7",
-		Roles:    []string{"PARTICIPANT", "RESEARCHER", "ADMIN"},
-	},
-}
 
 // This function is used for setup before executing the test functions
 func TestMain(m *testing.M) {
@@ -96,7 +32,8 @@ func TestLoginWithEmail(t *testing.T) {
 
 	t.Run("Testing login without payload", func(t *testing.T) {
 		resp, err := s.LoginWithEmail(context.Background(), nil)
-		if err == nil || err.Error() != "invalid username and/or password" || resp != nil {
+		st, ok := status.FromError(err)
+		if !ok || err == nil || st.Message() != "invalid username and/or password" || resp != nil {
 			t.Errorf("wrong error: %s", err.Error())
 			t.Errorf("or response: %s", resp)
 			return
@@ -111,7 +48,8 @@ func TestLoginWithEmail(t *testing.T) {
 		).Return(nil, errors.New("invalid username and/or password"))
 
 		resp, err := s.LoginWithEmail(context.Background(), req)
-		if err == nil || err.Error() != "invalid username and/or password" || resp != nil {
+		st, ok := status.FromError(err)
+		if !ok || st == nil || st.Message() != "invalid username and/or password" || resp != nil {
 			t.Errorf("wrong error: %s", err.Error())
 			t.Errorf("or response: %s", resp)
 			return
@@ -130,7 +68,8 @@ func TestLoginWithEmail(t *testing.T) {
 		).Return(nil, errors.New("invalid username and/or password"))
 
 		resp, err := s.LoginWithEmail(context.Background(), req)
-		if err == nil || err.Error() != "invalid username and/or password" || resp != nil {
+		st, ok := status.FromError(err)
+		if !ok || st == nil || st.Message() != "invalid username and/or password" || resp != nil {
 			t.Errorf("wrong error: %s", err.Error())
 			t.Errorf("or response: %s", resp)
 			return
@@ -149,7 +88,8 @@ func TestLoginWithEmail(t *testing.T) {
 		).Return(nil, errors.New("invalid username and/or password"))
 
 		resp, err := s.LoginWithEmail(context.Background(), req)
-		if err == nil || err.Error() != "invalid username and/or password" || resp != nil {
+		st, ok := status.FromError(err)
+		if !ok || st == nil || st.Message() != "invalid username and/or password" || resp != nil {
 			t.Errorf("wrong error: %s", err.Error())
 			t.Errorf("or response: %s", resp)
 			return
@@ -174,7 +114,8 @@ func TestLoginWithEmail(t *testing.T) {
 
 		resp, err := s.LoginWithEmail(context.Background(), req)
 		if err != nil {
-			t.Errorf("unexpected error: %s", err.Error())
+			st, _ := status.FromError(err)
+			t.Errorf("unexpected error: %s", st.Message())
 			return
 		}
 		if len(resp.Token) < 1 {
@@ -193,7 +134,8 @@ func TestSignup(t *testing.T) {
 
 	t.Run("Testing signup without payload", func(t *testing.T) {
 		resp, err := s.SignupWithEmail(context.Background(), nil)
-		if err == nil || err.Error() != "missing arguments" || resp != nil {
+		st, ok := status.FromError(err)
+		if !ok || st == nil || st.Message() != "missing arguments" || resp != nil {
 			t.Errorf("wrong error: %s", err.Error())
 			t.Errorf("or response: %s", resp)
 			return
@@ -204,7 +146,8 @@ func TestSignup(t *testing.T) {
 		req := &user_api.NewUser{}
 
 		resp, err := s.SignupWithEmail(context.Background(), req)
-		if err == nil || err.Error() != "missing arguments" || resp != nil {
+		st, ok := status.FromError(err)
+		if !ok || st == nil || st.Message() != "missing arguments" || resp != nil {
 			t.Errorf("wrong error: %s", err.Error())
 			t.Errorf("or response: %s", resp)
 			return
@@ -226,7 +169,8 @@ func TestSignup(t *testing.T) {
 		).Return(nil, errors.New("password too weak"))
 
 		resp, err := s.SignupWithEmail(context.Background(), req)
-		if err == nil || err.Error() != "password too weak" || resp != nil {
+		st, ok := status.FromError(err)
+		if !ok || st == nil || st.Message() != "password too weak" || resp != nil {
 			t.Errorf("wrong error: %s", err.Error())
 			t.Errorf("or response: %s", resp)
 			return
@@ -248,7 +192,8 @@ func TestSignup(t *testing.T) {
 		).Return(nil, errors.New("email not valid"))
 
 		resp, err := s.SignupWithEmail(context.Background(), req)
-		if err == nil || err.Error() != "email not valid" || resp != nil {
+		st, ok := status.FromError(err)
+		if !ok || st == nil || st.Message() != "email not valid" || resp != nil {
 			t.Errorf("wrong error: %s", err.Error())
 			t.Errorf("or response: %s", resp)
 			return
@@ -270,7 +215,8 @@ func TestSignup(t *testing.T) {
 		).Return(nil, errors.New("user already exists"))
 
 		resp, err := s.SignupWithEmail(context.Background(), req)
-		if err == nil || err.Error() != "user already exists" || resp != nil {
+		st, ok := status.FromError(err)
+		if !ok || st == nil || st.Message() != "user already exists" || resp != nil {
 			t.Errorf("wrong error: %s", err.Error())
 			t.Errorf("or response: %s", resp)
 			return
@@ -315,7 +261,8 @@ func TestValidateToken(t *testing.T) {
 
 	t.Run("Testing token validation without payload", func(t *testing.T) {
 		resp, err := s.ValidateJWT(context.Background(), nil)
-		if err == nil || err.Error() != "missing arguments" || resp != nil {
+		st, ok := status.FromError(err)
+		if !ok || st == nil || st.Message() != "missing arguments" || resp != nil {
 			t.Errorf("wrong error: %s", err.Error())
 			t.Errorf("or response: %s", resp)
 			return
@@ -326,7 +273,8 @@ func TestValidateToken(t *testing.T) {
 		req := &auth_api.EncodedToken{}
 
 		resp, err := s.ValidateJWT(context.Background(), req)
-		if err == nil || err.Error() != "missing arguments" || resp != nil {
+		st, ok := status.FromError(err)
+		if !ok || st == nil || st.Message() != "missing arguments" || resp != nil {
 			t.Errorf("wrong error: %s", err.Error())
 			t.Errorf("or response: %s", resp)
 			return
@@ -346,7 +294,8 @@ func TestValidateToken(t *testing.T) {
 		}
 
 		resp, err := s.ValidateJWT(context.Background(), req)
-		if err == nil || err.Error() != "invalid token" || resp != nil {
+		st, ok := status.FromError(err)
+		if !ok || st == nil || st.Message() != "invalid token" || resp != nil {
 			t.Errorf("wrong error: %s", err.Error())
 			t.Errorf("or response: %s", resp)
 			return
@@ -396,7 +345,8 @@ func TestValidateToken(t *testing.T) {
 			Token: adminToken,
 		}
 		resp, err := s.ValidateJWT(context.Background(), req)
-		if err == nil || err.Error() != "invalid token" || resp != nil {
+		st, ok := status.FromError(err)
+		if !ok || st == nil || st.Message() != "invalid token" || resp != nil {
 			t.Errorf("wrong error: %s", err.Error())
 			t.Errorf("or response: %s", resp)
 			return
@@ -418,7 +368,8 @@ func TestRenewToken(t *testing.T) {
 
 	t.Run("Testing token refresh without token", func(t *testing.T) {
 		resp, err := s.RenewJWT(context.Background(), nil)
-		if err == nil || err.Error() != "missing arguments" || resp != nil {
+		st, ok := status.FromError(err)
+		if !ok || st == nil || st.Message() != "missing arguments" || resp != nil {
 			t.Errorf("wrong error: %s", err.Error())
 			t.Errorf("or response: %s", resp)
 			return
@@ -429,7 +380,8 @@ func TestRenewToken(t *testing.T) {
 		req := &auth_api.EncodedToken{}
 
 		resp, err := s.RenewJWT(context.Background(), req)
-		if err == nil || err.Error() != "missing arguments" || resp != nil {
+		st, ok := status.FromError(err)
+		if !ok || st == nil || st.Message() != "missing arguments" || resp != nil {
 			t.Errorf("wrong error: %s", err.Error())
 			t.Errorf("or response: %s", resp)
 			return
@@ -442,7 +394,8 @@ func TestRenewToken(t *testing.T) {
 		}
 
 		resp, err := s.RenewJWT(context.Background(), req)
-		if err == nil || err.Error() != "invalid token" || resp != nil {
+		st, ok := status.FromError(err)
+		if !ok || st == nil || st.Message() != "invalid token" || resp != nil {
 			t.Errorf("wrong error: %s", err.Error())
 			t.Errorf("or response: %s", resp)
 			return
@@ -456,7 +409,8 @@ func TestRenewToken(t *testing.T) {
 		}
 
 		resp, err := s.RenewJWT(context.Background(), req)
-		if err == nil || err.Error() != "can't renew token so often" || resp != nil {
+		st, ok := status.FromError(err)
+		if !ok || st == nil || st.Message() != "can't renew token so often" || resp != nil {
 			t.Errorf("wrong error: %s", err.Error())
 			t.Errorf("or response: %s", resp)
 			return
@@ -493,7 +447,8 @@ func TestRenewToken(t *testing.T) {
 			Token: userToken,
 		}
 		resp, err := s.RenewJWT(context.Background(), req)
-		if err == nil || err.Error() != "invalid token" || resp != nil {
+		st, ok := status.FromError(err)
+		if !ok || st == nil || st.Message() != "invalid token" || resp != nil {
 			t.Errorf("wrong error: %s", err.Error())
 			t.Errorf("or response: %s", resp)
 			return

@@ -33,6 +33,7 @@ func main() {
 
 	userManagementClient = user_api.NewUserManagementApiClient(userManagementServerConn)
 
+	log.Println("wait connections on port " + strconv.Itoa(conf.ListenPort))
 	lis, err := net.Listen("tcp", ":"+strconv.Itoa(conf.ListenPort))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
