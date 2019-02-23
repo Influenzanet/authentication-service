@@ -49,8 +49,8 @@ func (s *authServiceServer) SignupWithEmail(ctx context.Context, req *user_api.N
 	}
 	resp, err := userManagementClient.SignupWithEmail(context.Background(), req)
 	if err != nil {
-		log.Printf("error during signup with email: %s", err.Error())
 		st := status.Convert(err)
+		log.Printf("error during signup with email: %s: %s", st.Code(), st.Message())
 		return nil, status.Error(codes.Internal, st.Message())
 	}
 
