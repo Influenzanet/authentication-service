@@ -10,10 +10,10 @@ import (
 	"github.com/golang/mock/gomock"
 	"google.golang.org/grpc/status"
 
-	influenzanet "github.com/Influenzanet/api/dist/go"
-	auth_api "github.com/Influenzanet/api/dist/go/auth-service"
-	user_api "github.com/Influenzanet/api/dist/go/user-management"
-	um_mock "github.com/Influenzanet/authentication-service/mock_user_management"
+	influenzanet "github.com/influenzanet/api/dist/go"
+	auth_api "github.com/influenzanet/api/dist/go/auth-service"
+	user_api "github.com/influenzanet/api/dist/go/user-management"
+	um_mock "github.com/influenzanet/authentication-service/mock_user_management"
 )
 
 // This function is used for setup before executing the test functions

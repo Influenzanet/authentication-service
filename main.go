@@ -5,8 +5,8 @@ import (
 	"net"
 	"strconv"
 
-	auth_api "github.com/Influenzanet/api/dist/go/auth-service"
-	user_api "github.com/Influenzanet/api/dist/go/user-management"
+	auth_api "github.com/influenzanet/api/dist/go/auth-service"
+	user_api "github.com/influenzanet/api/dist/go/user-management"
 	"google.golang.org/grpc"
 )
 

@@ -10,9 +10,9 @@ import (
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc/status"
 
-	influenzanet "github.com/Influenzanet/api/dist/go"
-	auth_api "github.com/Influenzanet/api/dist/go/auth-service"
-	user_api "github.com/Influenzanet/api/dist/go/user-management"
+	influenzanet "github.com/influenzanet/api/dist/go"
+	auth_api "github.com/influenzanet/api/dist/go/auth-service"
+	user_api "github.com/influenzanet/api/dist/go/user-management"
 )
 
 func checkTokenAgeMaturity(issuedAt int64) bool {
