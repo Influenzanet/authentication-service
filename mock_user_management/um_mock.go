@@ -116,3 +116,23 @@ func (mr *MockUserManagementApiClientMockRecorder) Status(arg0, arg1 interface{}
 	varargs := append([]interface{}{arg0, arg1}, arg2...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Status", reflect.TypeOf((*MockUserManagementApiClient)(nil).Status), varargs...)
 }
+
+// TokenRefreshed mocks base method
+func (m *MockUserManagementApiClient) TokenRefreshed(arg0 context.Context, arg1 *user_management.UserReference, arg2 ...grpc.CallOption) (*go0.Status, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{arg0, arg1}
+	for _, a := range arg2 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "TokenRefreshed", varargs...)
+	ret0, _ := ret[0].(*go0.Status)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// TokenRefreshed indicates an expected call of TokenRefreshed
+func (mr *MockUserManagementApiClientMockRecorder) TokenRefreshed(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{arg0, arg1}, arg2...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TokenRefreshed", reflect.TypeOf((*MockUserManagementApiClient)(nil).TokenRefreshed), varargs...)
+}

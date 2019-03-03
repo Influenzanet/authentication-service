@@ -117,6 +117,19 @@ func (s *authServiceServer) RenewJWT(ctx context.Context, req *auth_api.EncodedT
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
+	updateReq := user_api.UserReference{
+		Auth: &influenzanet.ParsedToken{
+			InstanceId: parsedToken.InstanceID,
+		},
+		UserId: parsedToken.UserID,
+	}
+	_, err = userManagementClient.TokenRefreshed(context.Background(), &updateReq)
+	if err != nil {
+		st := status.Convert(err)
+		log.Printf("error during token refresh: %s: %s", st.Code(), st.Message())
+		return nil, status.Error(codes.Internal, st.Message())
+	}
+
 	return &auth_api.EncodedToken{
 		Token: newToken,
 	}, nil

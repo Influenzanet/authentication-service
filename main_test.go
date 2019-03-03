@@ -355,6 +355,11 @@ func TestValidateToken(t *testing.T) {
 }
 
 func TestRenewToken(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	mockUserManagementClient := um_mock.NewMockUserManagementApiClient(mockCtrl)
+	userManagementClient = mockUserManagementClient
+
 	tokenValidityPeriod = time.Second * 2
 	minTokenAge = time.Second * 1
 
@@ -428,6 +433,11 @@ func TestRenewToken(t *testing.T) {
 		req := &auth_api.EncodedToken{
 			Token: userToken,
 		}
+
+		mockUserManagementClient.EXPECT().TokenRefreshed(
+			gomock.Any(),
+			gomock.Any(),
+		).Return(&influenzanet.Status{}, nil)
 
 		resp, err := s.RenewJWT(context.Background(), req)
 		if err != nil {
