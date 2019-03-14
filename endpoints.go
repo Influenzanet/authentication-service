@@ -43,8 +43,8 @@ func (s *authServiceServer) LoginWithEmail(ctx context.Context, req *influenzane
 	}, nil
 }
 
-func (s *authServiceServer) SignupWithEmail(ctx context.Context, req *user_api.NewUser) (*auth_api.EncodedToken, error) {
-	if req == nil || req.Auth == nil || req.Profile == nil {
+func (s *authServiceServer) SignupWithEmail(ctx context.Context, req *influenzanet.UserCredentials) (*auth_api.EncodedToken, error) {
+	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "missing arguments")
 	}
 	resp, err := userManagementClient.SignupWithEmail(context.Background(), req)

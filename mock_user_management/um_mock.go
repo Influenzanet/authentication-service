@@ -37,6 +37,46 @@ func (m *MockUserManagementApiClient) EXPECT() *MockUserManagementApiClientMockR
 	return m.recorder
 }
 
+// AddSubprofile mocks base method
+func (m *MockUserManagementApiClient) AddSubprofile(arg0 context.Context, arg1 *user_management.SubProfileRequest, arg2 ...grpc.CallOption) (*user_management.User, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{arg0, arg1}
+	for _, a := range arg2 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "AddSubprofile", varargs...)
+	ret0, _ := ret[0].(*user_management.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AddSubprofile indicates an expected call of AddSubprofile
+func (mr *MockUserManagementApiClientMockRecorder) AddSubprofile(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{arg0, arg1}, arg2...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddSubprofile", reflect.TypeOf((*MockUserManagementApiClient)(nil).AddSubprofile), varargs...)
+}
+
+// ChangeEmail mocks base method
+func (m *MockUserManagementApiClient) ChangeEmail(arg0 context.Context, arg1 *user_management.EmailChangeMsg, arg2 ...grpc.CallOption) (*user_management.User, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{arg0, arg1}
+	for _, a := range arg2 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "ChangeEmail", varargs...)
+	ret0, _ := ret[0].(*user_management.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ChangeEmail indicates an expected call of ChangeEmail
+func (mr *MockUserManagementApiClientMockRecorder) ChangeEmail(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{arg0, arg1}, arg2...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ChangeEmail", reflect.TypeOf((*MockUserManagementApiClient)(nil).ChangeEmail), varargs...)
+}
+
 // ChangePassword mocks base method
 func (m *MockUserManagementApiClient) ChangePassword(arg0 context.Context, arg1 *user_management.PasswordChangeMsg, arg2 ...grpc.CallOption) (*go0.Status, error) {
 	m.ctrl.T.Helper()
@@ -55,6 +95,26 @@ func (mr *MockUserManagementApiClientMockRecorder) ChangePassword(arg0, arg1 int
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0, arg1}, arg2...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ChangePassword", reflect.TypeOf((*MockUserManagementApiClient)(nil).ChangePassword), varargs...)
+}
+
+// GetUser mocks base method
+func (m *MockUserManagementApiClient) GetUser(arg0 context.Context, arg1 *user_management.UserReference, arg2 ...grpc.CallOption) (*user_management.User, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{arg0, arg1}
+	for _, a := range arg2 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetUser", varargs...)
+	ret0, _ := ret[0].(*user_management.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUser indicates an expected call of GetUser
+func (mr *MockUserManagementApiClientMockRecorder) GetUser(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{arg0, arg1}, arg2...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUser", reflect.TypeOf((*MockUserManagementApiClient)(nil).GetUser), varargs...)
 }
 
 // LoginWithEmail mocks base method
@@ -77,8 +137,48 @@ func (mr *MockUserManagementApiClientMockRecorder) LoginWithEmail(arg0, arg1 int
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoginWithEmail", reflect.TypeOf((*MockUserManagementApiClient)(nil).LoginWithEmail), varargs...)
 }
 
+// RemoveSubprofile mocks base method
+func (m *MockUserManagementApiClient) RemoveSubprofile(arg0 context.Context, arg1 *user_management.SubProfileRequest, arg2 ...grpc.CallOption) (*user_management.User, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{arg0, arg1}
+	for _, a := range arg2 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "RemoveSubprofile", varargs...)
+	ret0, _ := ret[0].(*user_management.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RemoveSubprofile indicates an expected call of RemoveSubprofile
+func (mr *MockUserManagementApiClientMockRecorder) RemoveSubprofile(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{arg0, arg1}, arg2...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveSubprofile", reflect.TypeOf((*MockUserManagementApiClient)(nil).RemoveSubprofile), varargs...)
+}
+
+// SetProfile mocks base method
+func (m *MockUserManagementApiClient) SetProfile(arg0 context.Context, arg1 *user_management.ProfileRequest, arg2 ...grpc.CallOption) (*user_management.User, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{arg0, arg1}
+	for _, a := range arg2 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "SetProfile", varargs...)
+	ret0, _ := ret[0].(*user_management.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SetProfile indicates an expected call of SetProfile
+func (mr *MockUserManagementApiClientMockRecorder) SetProfile(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{arg0, arg1}, arg2...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetProfile", reflect.TypeOf((*MockUserManagementApiClient)(nil).SetProfile), varargs...)
+}
+
 // SignupWithEmail mocks base method
-func (m *MockUserManagementApiClient) SignupWithEmail(arg0 context.Context, arg1 *user_management.NewUser, arg2 ...grpc.CallOption) (*user_management.UserAuthInfo, error) {
+func (m *MockUserManagementApiClient) SignupWithEmail(arg0 context.Context, arg1 *go0.UserCredentials, arg2 ...grpc.CallOption) (*user_management.UserAuthInfo, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0, arg1}
 	for _, a := range arg2 {

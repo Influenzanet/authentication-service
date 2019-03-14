@@ -142,9 +142,12 @@ func TestSignup(t *testing.T) {
 		}
 	})
 
-	t.Run("Testing signup with empty payload", func(t *testing.T) {
-		req := &user_api.NewUser{}
-
+	t.Run("with empty payload", func(t *testing.T) {
+		req := &influenzanet.UserCredentials{}
+		mockUserManagementClient.EXPECT().SignupWithEmail(
+			gomock.Any(),
+			gomock.Any(),
+		).Return(nil, errors.New("missing arguments"))
 		resp, err := s.SignupWithEmail(context.Background(), req)
 		st, ok := status.FromError(err)
 		if !ok || st == nil || st.Message() != "missing arguments" || resp != nil {
@@ -154,14 +157,11 @@ func TestSignup(t *testing.T) {
 		}
 	})
 
-	t.Run("Testing signup with too short password", func(t *testing.T) {
-		req := &user_api.NewUser{
-			Auth: &influenzanet.UserCredentials{
-				Email:      "test@test.com",
-				Password:   "short",
-				InstanceId: "test-inst",
-			},
-			Profile: &user_api.Profile{},
+	t.Run("with too short password", func(t *testing.T) {
+		req := &influenzanet.UserCredentials{
+			Email:      "test@test.com",
+			Password:   "short",
+			InstanceId: "test-inst",
 		}
 		mockUserManagementClient.EXPECT().SignupWithEmail(
 			gomock.Any(),
@@ -177,14 +177,11 @@ func TestSignup(t *testing.T) {
 		}
 	})
 
-	t.Run("Testing signup with invalid email", func(t *testing.T) {
-		req := &user_api.NewUser{
-			Auth: &influenzanet.UserCredentials{
-				Email:      "test-test.com",
-				Password:   "short",
-				InstanceId: "test-inst",
-			},
-			Profile: &user_api.Profile{},
+	t.Run("with invalid email", func(t *testing.T) {
+		req := &influenzanet.UserCredentials{
+			Email:      "test-test.com",
+			Password:   "short",
+			InstanceId: "test-inst",
 		}
 		mockUserManagementClient.EXPECT().SignupWithEmail(
 			gomock.Any(),
@@ -200,14 +197,11 @@ func TestSignup(t *testing.T) {
 		}
 	})
 
-	t.Run("Testing signup with existing user", func(t *testing.T) {
-		req := &user_api.NewUser{
-			Auth: &influenzanet.UserCredentials{
-				Email:      "test@test.com",
-				Password:   "short",
-				InstanceId: "test-inst",
-			},
-			Profile: &user_api.Profile{},
+	t.Run("with existing user", func(t *testing.T) {
+		req := &influenzanet.UserCredentials{
+			Email:      "test@test.com",
+			Password:   "short",
+			InstanceId: "test-inst",
 		}
 		mockUserManagementClient.EXPECT().SignupWithEmail(
 			gomock.Any(),
@@ -223,14 +217,11 @@ func TestSignup(t *testing.T) {
 		}
 	})
 
-	t.Run("Testing signup with valid arguments", func(t *testing.T) {
-		req := &user_api.NewUser{
-			Auth: &influenzanet.UserCredentials{
-				Email:      "test@test.com",
-				Password:   "short",
-				InstanceId: "test-inst",
-			},
-			Profile: &user_api.Profile{},
+	t.Run("with valid arguments", func(t *testing.T) {
+		req := &influenzanet.UserCredentials{
+			Email:      "test@test.com",
+			Password:   "short",
+			InstanceId: "test-inst",
 		}
 
 		mockUserManagementClient.EXPECT().SignupWithEmail(
@@ -259,7 +250,7 @@ func TestValidateToken(t *testing.T) {
 
 	s := authServiceServer{}
 
-	t.Run("Testing token validation without payload", func(t *testing.T) {
+	t.Run("without payload", func(t *testing.T) {
 		resp, err := s.ValidateJWT(context.Background(), nil)
 		st, ok := status.FromError(err)
 		if !ok || st == nil || st.Message() != "missing arguments" || resp != nil {
@@ -269,7 +260,7 @@ func TestValidateToken(t *testing.T) {
 		}
 	})
 
-	t.Run("Testing token validation with empty payload", func(t *testing.T) {
+	t.Run("with empty payload", func(t *testing.T) {
 		req := &auth_api.EncodedToken{}
 
 		resp, err := s.ValidateJWT(context.Background(), req)
@@ -288,7 +279,7 @@ func TestValidateToken(t *testing.T) {
 		return
 	}
 
-	t.Run("Test token validation with wrong token", func(t *testing.T) {
+	t.Run("with wrong token", func(t *testing.T) {
 		req := &auth_api.EncodedToken{
 			Token: adminToken + "x",
 		}
@@ -302,7 +293,7 @@ func TestValidateToken(t *testing.T) {
 		}
 	})
 
-	t.Run("Test token validation with normal user token", func(t *testing.T) {
+	t.Run("with normal user token", func(t *testing.T) {
 		req := &auth_api.EncodedToken{
 			Token: userToken,
 		}
@@ -319,7 +310,7 @@ func TestValidateToken(t *testing.T) {
 		}
 	})
 
-	t.Run("Test token validation with admin token", func(t *testing.T) {
+	t.Run("with admin token", func(t *testing.T) {
 		req := &auth_api.EncodedToken{
 			Token: adminToken,
 		}
@@ -340,7 +331,7 @@ func TestValidateToken(t *testing.T) {
 	}
 	time.Sleep(tokenValidityPeriod + time.Second)
 
-	t.Run("Test with expired token", func(t *testing.T) {
+	t.Run("with expired token", func(t *testing.T) {
 		req := &auth_api.EncodedToken{
 			Token: adminToken,
 		}
@@ -381,7 +372,7 @@ func TestRenewToken(t *testing.T) {
 		}
 	})
 
-	t.Run("Test token refresh with empty token", func(t *testing.T) {
+	t.Run("with empty token", func(t *testing.T) {
 		req := &auth_api.EncodedToken{}
 
 		resp, err := s.RenewJWT(context.Background(), req)
@@ -393,7 +384,7 @@ func TestRenewToken(t *testing.T) {
 		}
 	})
 
-	t.Run("Test token refresh with wrong token", func(t *testing.T) {
+	t.Run("with wrong token", func(t *testing.T) {
 		req := &auth_api.EncodedToken{
 			Token: userToken + "x",
 		}
@@ -408,7 +399,7 @@ func TestRenewToken(t *testing.T) {
 	})
 
 	// Test eagerly, when min age not reached yet
-	t.Run("Testing token too eagerly", func(t *testing.T) {
+	t.Run("too eagerly", func(t *testing.T) {
 		req := &auth_api.EncodedToken{
 			Token: userToken,
 		}
@@ -429,7 +420,7 @@ func TestRenewToken(t *testing.T) {
 	time.Sleep(minTokenAge)
 
 	// Test renew after min age reached - wait 2 seconds
-	t.Run("Testing token refresh", func(t *testing.T) {
+	t.Run("with normal token", func(t *testing.T) {
 		req := &auth_api.EncodedToken{
 			Token: userToken,
 		}
@@ -452,7 +443,7 @@ func TestRenewToken(t *testing.T) {
 
 	time.Sleep(tokenValidityPeriod)
 	// Test with expired token
-	t.Run("Testing with expired token", func(t *testing.T) {
+	t.Run("with expired token", func(t *testing.T) {
 		req := &auth_api.EncodedToken{
 			Token: userToken,
 		}
