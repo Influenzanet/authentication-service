@@ -1,6 +1,9 @@
 package main
 
-import "go.mongodb.org/mongo-driver/bson/primitive"
+import (
+	auth_api "github.com/influenzanet/api/dist/go/auth-service"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
 
 // TempToken is a database entry for a temporary token
 type TempToken struct {
@@ -13,6 +16,14 @@ type TempToken struct {
 	InstanceID string             `bson:"instance_id" json:"instance_id"`
 }
 
-func (t TempToken) ToAPI() {
-
+// ToAPI converts the object from DB to API format
+func (t TempToken) ToAPI() *auth_api.TempTokenInfo {
+	return &auth_api.TempTokenInfo{
+		Token:      t.Token,
+		Expiration: t.Expiration,
+		Purpose:    t.Purpose,
+		UserId:     t.UserID,
+		Info:       t.Info,
+		InstanceId: t.InstanceID,
+	}
 }
