@@ -1,3 +1,7 @@
 listen_port: 3201
 service_urls:
   user_management: "localhost:3200"
+db:
+  address: influenzanettestdbcluster-pwvbz.mongodb.net/test?retryWrites=true
+  credentials_path: ./secret/db.yaml
+  timeout: 10

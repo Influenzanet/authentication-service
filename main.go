@@ -25,6 +25,7 @@ func connectToUserManagementServer() *grpc.ClientConn {
 
 func init() {
 	readConfig()
+	dbInit()
 }
 
 func main() {
