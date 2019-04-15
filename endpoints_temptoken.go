@@ -26,7 +26,7 @@ func (s *authServiceServer) GenerateToken(ctx context.Context, t *auth_api.TempT
 		tempToken.Expiration = getExpirationTime(10)
 	}
 
-	token, err := dbCreateToken(tempToken)
+	token, err := addTempTokenDB(tempToken)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
