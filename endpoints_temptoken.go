@@ -10,8 +10,8 @@ import (
 )
 
 func (s *authServiceServer) GenerateToken(ctx context.Context, t *auth_api.TempTokenInfo) (*auth_api.TempToken, error) {
-	if t.UserId == "" || t.InstanceId == "" || t.Purpose == "" {
-		return nil, status.Error(codes.InvalidArgument, "missing arguments")
+	if t == nil || t.UserId == "" || t.InstanceId == "" || t.Purpose == "" {
+		return nil, status.Error(codes.InvalidArgument, "missing argument")
 	}
 
 	tempToken := TempToken{

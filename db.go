@@ -11,6 +11,7 @@ import (
 )
 
 var dbClient *mongo.Client
+var dbInstance string
 
 func dbInit() {
 	dbCreds, err := readDBcredentials(conf.DB.CredentialsPath)
@@ -26,6 +27,8 @@ func dbInit() {
 		log.Fatal(err)
 	}
 
+	dbInstance = "default-token"
+
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(conf.DB.Timeout)*time.Second)
 	defer cancel()
 
@@ -36,7 +39,7 @@ func dbInit() {
 }
 
 func getCollection() *mongo.Collection {
-	return dbClient.Database("default_token").Collection("tokens")
+	return dbClient.Database(dbInstance).Collection("tokens")
 } //
 
 func getContext() (ctx context.Context, cancel context.CancelFunc) {

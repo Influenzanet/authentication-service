@@ -18,3 +18,7 @@ func randomString() string {
 func getExpirationTime(days int) int64 {
 	return time.Now().AddDate(0, 0, days).Unix()
 }
+
+func reachedExpirationTime(t int64) bool {
+	return time.Now().After(time.Unix(t, 0))
+}

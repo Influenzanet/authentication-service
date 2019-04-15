@@ -3,7 +3,9 @@ package main
 import (
 	"context"
 	"errors"
+	"log"
 	"os"
+	"strconv"
 	"testing"
 	"time"
 
@@ -16,10 +18,23 @@ import (
 	um_mock "github.com/influenzanet/authentication-service/mock_user_management"
 )
 
+func dropTestDB() {
+	log.Println("Drop test database")
+	ctx, cancel := getContext()
+	defer cancel()
+
+	err := dbClient.Database(dbInstance).Drop(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
 // This function is used for setup before executing the test functions
 func TestMain(m *testing.M) {
-	// Run the other tests
-	os.Exit(m.Run())
+	dbInstance = "test-db-" + strconv.FormatInt(time.Now().Unix(), 10)
+	result := m.Run()
+	dropTestDB()
+	os.Exit(result)
 }
 
 func TestLoginWithEmail(t *testing.T) {
