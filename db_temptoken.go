@@ -17,7 +17,10 @@ func addTempTokenDB(t TempToken) (string, error) {
 		return "", errors.New("token with purpose already exists")
 	}
 
-	t.Token = randomString()
+	t.Token, err = generateUniqueTokenString()
+	if err != nil {
+		return "", err
+	}
 
 	_, err = getCollection().InsertOne(ctx, t)
 	if err != nil {
