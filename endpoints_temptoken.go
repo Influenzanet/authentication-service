@@ -9,7 +9,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (s *authServiceServer) GenerateToken(ctx context.Context, t *auth_api.TempTokenInfo) (*auth_api.TempToken, error) {
+func (s *authServiceServer) GenerateTempToken(ctx context.Context, t *auth_api.TempTokenInfo) (*auth_api.TempToken, error) {
 	if t == nil || t.UserId == "" || t.InstanceId == "" || t.Purpose == "" {
 		return nil, status.Error(codes.InvalidArgument, "missing argument")
 	}
@@ -36,15 +36,18 @@ func (s *authServiceServer) GenerateToken(ctx context.Context, t *auth_api.TempT
 	}, nil
 }
 
-func (s *authServiceServer) ValdateToken(ctx context.Context, t *auth_api.TempToken) (*auth_api.TempTokenInfo, error) {
-	return nil, nil
+func (s *authServiceServer) ValidateTempToken(ctx context.Context, t *auth_api.TempToken) (*auth_api.TempTokenInfo, error) {
+	return nil, status.Error(codes.Unimplemented, "not implemented")
 }
-func (s *authServiceServer) GetTokensByUser(ctx context.Context, t *auth_api.TempTokenInfo) (*auth_api.TempTokenInfos, error) {
-	return nil, nil
+
+func (s *authServiceServer) GetTempTokens(ctx context.Context, t *auth_api.TempTokenInfo) (*auth_api.TempTokenInfos, error) {
+	return nil, status.Error(codes.Unimplemented, "not implemented")
 }
-func (s *authServiceServer) DeleteToken(ctx context.Context, t *auth_api.TempToken) (*influenzanet.Status, error) {
-	return nil, nil
+
+func (s *authServiceServer) DeleteTempToken(ctx context.Context, t *auth_api.TempToken) (*influenzanet.Status, error) {
+	return nil, status.Error(codes.Unimplemented, "not implemented")
 }
-func (s *authServiceServer) PurgeUserTokens(ctx context.Context, t *auth_api.TempTokenInfo) (*influenzanet.Status, error) {
-	return nil, nil
+
+func (s *authServiceServer) PurgeUserTempTokens(ctx context.Context, t *auth_api.TempTokenInfo) (*influenzanet.Status, error) {
+	return nil, status.Error(codes.Unimplemented, "not implemented")
 }

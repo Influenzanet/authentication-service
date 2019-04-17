@@ -9,7 +9,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func TestGenerateTokenEndpoint(t *testing.T) {
+func TestGenerateTempTokenEndpoint(t *testing.T) {
 	s := authServiceServer{}
 
 	testTempToken := &auth_service.TempTokenInfo{
@@ -20,7 +20,7 @@ func TestGenerateTokenEndpoint(t *testing.T) {
 	}
 
 	t.Run("without payload", func(t *testing.T) {
-		resp, err := s.GenerateToken(context.Background(), nil)
+		resp, err := s.GenerateTempToken(context.Background(), nil)
 		if err == nil {
 			t.Errorf("or response: %s", resp)
 			return
@@ -31,7 +31,7 @@ func TestGenerateTokenEndpoint(t *testing.T) {
 	})
 
 	t.Run("with empty payload", func(t *testing.T) {
-		resp, err := s.GenerateToken(context.Background(), &auth_service.TempTokenInfo{})
+		resp, err := s.GenerateTempToken(context.Background(), &auth_service.TempTokenInfo{})
 		if err == nil {
 			t.Errorf("or response: %s", resp)
 			return
@@ -42,7 +42,7 @@ func TestGenerateTokenEndpoint(t *testing.T) {
 	})
 
 	t.Run("with valid TempToken", func(t *testing.T) {
-		resp, err := s.GenerateToken(context.Background(), testTempToken)
+		resp, err := s.GenerateTempToken(context.Background(), testTempToken)
 		if err != nil {
 			t.Errorf("unexpected error: %s", err.Error())
 			return
@@ -50,5 +50,84 @@ func TestGenerateTokenEndpoint(t *testing.T) {
 		if resp.Token == "" {
 			t.Errorf("wrong response: %s", resp)
 		}
+	})
+}
+
+func TestValidateTempTokenEndpoint(t *testing.T) {
+	// TODO: create test temp token
+
+	t.Run("without payload", func(t *testing.T) {
+		t.Error("test not implemented")
+	})
+
+	t.Run("with empty payload", func(t *testing.T) {
+		t.Error("test not implemented")
+	})
+
+	t.Run("with not existing token", func(t *testing.T) {
+		t.Error("test not implemented")
+	})
+
+	t.Run("with valid payload", func(t *testing.T) {
+		t.Error("test not implemented")
+	})
+}
+
+func TestGetTempTokensEndpoint(t *testing.T) {
+	// TODO: create test tokens
+	t.Run("without payload", func(t *testing.T) {
+		t.Error("test not implemented")
+	})
+
+	t.Run("with empty payload", func(t *testing.T) {
+		t.Error("test not implemented")
+	})
+
+	t.Run("get by user_id + instace_id", func(t *testing.T) {
+		t.Error("test not implemented")
+	})
+
+	t.Run("get by user_id + instace_id + type", func(t *testing.T) {
+		t.Error("test not implemented")
+	})
+
+	t.Run("get by type", func(t *testing.T) {
+		t.Error("test not implemented")
+	})
+}
+
+func TestDeleteTempTokenEndpoint(t *testing.T) {
+	t.Run("without payload", func(t *testing.T) {
+		t.Error("test not implemented")
+	})
+
+	t.Run("with empty payload", func(t *testing.T) {
+		t.Error("test not implemented")
+	})
+
+	t.Run("with not existing token", func(t *testing.T) {
+		t.Error("test not implemented")
+	})
+
+	t.Run("with existing token", func(t *testing.T) {
+		t.Error("test not implemented")
+	})
+}
+
+func TestPurgeUserTempTokensEndpoint(t *testing.T) {
+	t.Run("without payload", func(t *testing.T) {
+		t.Error("test not implemented")
+	})
+
+	t.Run("with empty payload", func(t *testing.T) {
+		t.Error("test not implemented")
+	})
+
+	t.Run("with not exisiting user_id/instance_id combination", func(t *testing.T) {
+		t.Error("test not implemented")
+	})
+
+	t.Run("with exisiting user_id/instance_id combination", func(t *testing.T) {
+		t.Error("test not implemented")
 	})
 }
