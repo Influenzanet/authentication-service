@@ -27,8 +27,8 @@ func generateUniqueTokenString() (string, error) {
 	return tokenStr, nil
 }
 
-func getExpirationTime(days int) int64 {
-	return time.Now().AddDate(0, 0, days).Unix()
+func getExpirationTime(validityPeriod time.Duration) int64 {
+	return time.Now().Add(validityPeriod).Unix()
 }
 
 func reachedExpirationTime(t int64) bool {

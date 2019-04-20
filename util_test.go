@@ -2,6 +2,7 @@ package main
 
 import (
 	"testing"
+	"time"
 )
 
 func TestGenerateUniqueTokenString(t *testing.T) {
@@ -30,28 +31,50 @@ func TestGenerateUniqueTokenString(t *testing.T) {
 
 func TestGetExpirationTime(t *testing.T) {
 	t.Run("with negative days", func(t *testing.T) {
-		t.Error("test not implemented")
+		resUnix := getExpirationTime(time.Hour * 24 * -5)
+		resTime := time.Unix(resUnix, 0)
+		expected := time.Now().AddDate(0, 0, -5)
+		if resTime.Year() != expected.Year() || resTime.Month() != expected.Month() || resTime.Day() != expected.Day() {
+			t.Errorf("date values don't match. result: %s, expected %s", resTime.String(), expected.String())
+			return
+		}
 	})
 
 	t.Run("with zero days", func(t *testing.T) {
-		t.Error("test not implemented")
+		resUnix := getExpirationTime(time.Hour * 24 * 0)
+		resTime := time.Unix(resUnix, 0)
+		expected := time.Now()
+		if resTime.Year() != expected.Year() || resTime.Month() != expected.Month() || resTime.Day() != expected.Day() {
+			t.Errorf("date values don't match. result: %s, expected %s", resTime.String(), expected.String())
+			return
+		}
 	})
 
 	t.Run("with positive days", func(t *testing.T) {
-		t.Error("test not implemented")
+		resUnix := getExpirationTime(time.Hour * 24 * 5)
+		resTime := time.Unix(resUnix, 0)
+		expected := time.Now().AddDate(0, 0, 5)
+		if resTime.Year() != expected.Year() || resTime.Month() != expected.Month() || resTime.Day() != expected.Day() {
+			t.Errorf("date values don't match. result: %s, expected %s", resTime.String(), expected.String())
+			return
+		}
 	})
 }
 
 func TestReachedExpirationTime(t *testing.T) {
 	t.Run("before expiration", func(t *testing.T) {
-		t.Error("test not implemented")
-	})
-
-	t.Run("exactly at expiration", func(t *testing.T) {
-		t.Error("test not implemented")
+		exp := getExpirationTime(time.Hour * 1)
+		isExp := reachedExpirationTime(exp)
+		if isExp {
+			t.Error("expiration should not be reached yet")
+		}
 	})
 
 	t.Run("after expiration", func(t *testing.T) {
-		t.Error("test not implemented")
+		exp := getExpirationTime(time.Hour * -1)
+		isExp := reachedExpirationTime(exp)
+		if !isExp {
+			t.Error("should be expired now")
+		}
 	})
 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"time"
 
 	influenzanet "github.com/influenzanet/api/dist/go"
 	auth_api "github.com/influenzanet/api/dist/go/auth-service"
@@ -23,7 +24,7 @@ func (s *authServiceServer) GenerateTempToken(ctx context.Context, t *auth_api.T
 	}
 
 	if tempToken.Expiration == 0 {
-		tempToken.Expiration = getExpirationTime(10)
+		tempToken.Expiration = getExpirationTime(time.Hour * 24 * 10)
 	}
 
 	token, err := addTempTokenDB(tempToken)
