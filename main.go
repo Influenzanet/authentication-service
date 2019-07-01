@@ -5,15 +5,14 @@ import (
 	"net"
 	"strconv"
 
-	auth_api "github.com/influenzanet/api/dist/go/auth-service"
-	user_api "github.com/influenzanet/api/dist/go/user-management"
+	api "github.com/influenzanet/authentication-service/api"
 	"google.golang.org/grpc"
 )
 
 type authServiceServer struct {
 }
 
-var userManagementClient user_api.UserManagementApiClient
+var userManagementClient api.UserManagementApiClient
 
 func connectToUserManagementServer() *grpc.ClientConn {
 	conn, err := grpc.Dial(conf.ServiceURLs.UserManagement, grpc.WithInsecure())
@@ -32,7 +31,7 @@ func main() {
 	userManagementServerConn := connectToUserManagementServer()
 	defer userManagementServerConn.Close()
 
-	userManagementClient = user_api.NewUserManagementApiClient(userManagementServerConn)
+	userManagementClient = api.NewUserManagementApiClient(userManagementServerConn)
 
 	log.Println("wait connections on port " + strconv.Itoa(conf.ListenPort))
 	lis, err := net.Listen("tcp", ":"+strconv.Itoa(conf.ListenPort))
@@ -40,6 +39,6 @@ func main() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	grpcServer := grpc.NewServer()
-	auth_api.RegisterAuthServiceApiServer(grpcServer, &authServiceServer{})
+	api.RegisterAuthServiceApiServer(grpcServer, &authServiceServer{})
 	grpcServer.Serve(lis)
 }

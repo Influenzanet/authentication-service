@@ -3,6 +3,9 @@ package main
 import (
 	"io/ioutil"
 	"log"
+	"os"
+	"strconv"
+	"time"
 
 	yaml "gopkg.in/yaml.v2"
 )
@@ -20,12 +23,19 @@ type dbCredentials struct {
 	Password string `yaml:"password"`
 }
 
+type jwtConf struct {
+	SecretKey           string
+	TokenExpiryInterval time.Duration
+	TokenMinimumAgeMin  time.Duration
+}
+
 type config struct {
 	ListenPort  int `yaml:"listen_port"`
 	ServiceURLs struct {
 		UserManagement string `yaml:"user_management"`
 	} `yaml:"service_urls"`
-	DB dbConf `yaml:"db"`
+	DB  dbConf `yaml:"db"`
+	JWT jwtConf
 }
 
 func readConfig() {
@@ -37,6 +47,19 @@ func readConfig() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	// Get Token Attributes
+	accessTokenExpiration, err := strconv.Atoi(os.Getenv("TOKEN_EXPIRATION_MIN"))
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	conf.JWT.TokenExpiryInterval = time.Minute * time.Duration(accessTokenExpiration)
+
+	tokenMinAge, err := strconv.Atoi(os.Getenv("TOKEN_MINIMUM_AGE_MIN"))
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	conf.JWT.TokenMinimumAgeMin = time.Minute * time.Duration(tokenMinAge)
 }
 
 func readDBcredentials(path string) (dbCredentials, error) {

@@ -1,7 +1,7 @@
 package main
 
 import (
-	auth_api "github.com/influenzanet/api/dist/go/auth-service"
+	api "github.com/influenzanet/authentication-service/api"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -17,8 +17,8 @@ type TempToken struct {
 }
 
 // ToAPI converts the object from DB to API format
-func (t TempToken) ToAPI() *auth_api.TempTokenInfo {
-	return &auth_api.TempTokenInfo{
+func (t TempToken) ToAPI() *api.TempTokenInfo {
+	return &api.TempTokenInfo{
 		Token:      t.Token,
 		Expiration: t.Expiration,
 		Purpose:    t.Purpose,

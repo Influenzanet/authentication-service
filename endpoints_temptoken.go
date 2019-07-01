@@ -4,13 +4,12 @@ import (
 	"context"
 	"time"
 
-	influenzanet "github.com/influenzanet/api/dist/go"
-	auth_api "github.com/influenzanet/api/dist/go/auth-service"
+	api "github.com/influenzanet/authentication-service/api"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
-func (s *authServiceServer) GenerateTempToken(ctx context.Context, t *auth_api.TempTokenInfo) (*auth_api.TempToken, error) {
+func (s *authServiceServer) GenerateTempToken(ctx context.Context, t *api.TempTokenInfo) (*api.TempToken, error) {
 	if t == nil || t.UserId == "" || t.InstanceId == "" || t.Purpose == "" {
 		return nil, status.Error(codes.InvalidArgument, "missing argument")
 	}
@@ -32,23 +31,23 @@ func (s *authServiceServer) GenerateTempToken(ctx context.Context, t *auth_api.T
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	return &auth_api.TempToken{
+	return &api.TempToken{
 		Token: token,
 	}, nil
 }
 
-func (s *authServiceServer) ValidateTempToken(ctx context.Context, t *auth_api.TempToken) (*auth_api.TempTokenInfo, error) {
+func (s *authServiceServer) ValidateTempToken(ctx context.Context, t *api.TempToken) (*api.TempTokenInfo, error) {
 	return nil, status.Error(codes.Unimplemented, "not implemented")
 }
 
-func (s *authServiceServer) GetTempTokens(ctx context.Context, t *auth_api.TempTokenInfo) (*auth_api.TempTokenInfos, error) {
+func (s *authServiceServer) GetTempTokens(ctx context.Context, t *api.TempTokenInfo) (*api.TempTokenInfos, error) {
 	return nil, status.Error(codes.Unimplemented, "not implemented")
 }
 
-func (s *authServiceServer) DeleteTempToken(ctx context.Context, t *auth_api.TempToken) (*influenzanet.Status, error) {
+func (s *authServiceServer) DeleteTempToken(ctx context.Context, t *api.TempToken) (*api.Status, error) {
 	return nil, status.Error(codes.Unimplemented, "not implemented")
 }
 
-func (s *authServiceServer) PurgeUserTempTokens(ctx context.Context, t *auth_api.TempTokenInfo) (*influenzanet.Status, error) {
+func (s *authServiceServer) PurgeUserTempTokens(ctx context.Context, t *api.TempTokenInfo) (*api.Status, error) {
 	return nil, status.Error(codes.Unimplemented, "not implemented")
 }
