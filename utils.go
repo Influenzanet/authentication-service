@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/rand"
 	b32 "encoding/base32"
+	"strings"
 	"time"
 )
 
@@ -33,4 +34,12 @@ func getExpirationTime(validityPeriod time.Duration) int64 {
 
 func reachedExpirationTime(t int64) bool {
 	return time.Now().After(time.Unix(t, 0))
+}
+
+func getRolesFromPayload(payload map[string]string) []string {
+	roles := []string{}
+	if val, ok := payload["roles"]; ok {
+		roles = strings.Split(val, ",")
+	}
+	return roles
 }

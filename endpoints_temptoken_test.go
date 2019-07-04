@@ -4,17 +4,16 @@ import (
 	"context"
 	"testing"
 
-	auth_service "github.com/influenzanet/api/dist/go/auth-service"
-
+	api "github.com/influenzanet/authentication-service/api"
 	"google.golang.org/grpc/status"
 )
 
 func TestGenerateTempTokenEndpoint(t *testing.T) {
 	s := authServiceServer{}
 
-	testTempToken := &auth_service.TempTokenInfo{
+	testTempToken := &api.TempTokenInfo{
 		UserId:     "test_user_id",
-		InstanceId: "test_instance_id",
+		InstanceId: testInstanceID,
 		Purpose:    "test_purpose",
 		Info:       "test_info",
 	}
@@ -31,7 +30,7 @@ func TestGenerateTempTokenEndpoint(t *testing.T) {
 	})
 
 	t.Run("with empty payload", func(t *testing.T) {
-		resp, err := s.GenerateTempToken(context.Background(), &auth_service.TempTokenInfo{})
+		resp, err := s.GenerateTempToken(context.Background(), &api.TempTokenInfo{})
 		if err == nil {
 			t.Errorf("or response: %s", resp)
 			return

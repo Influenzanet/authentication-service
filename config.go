@@ -16,6 +16,7 @@ type dbConf struct {
 	CredentialsPath string `yaml:"credentials_path"`
 	Address         string `yaml:"address"`
 	Timeout         int    `yaml:"timeout"`
+	DBNamePrefix string
 }
 
 type dbCredentials struct {
@@ -47,6 +48,9 @@ func readConfig() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	conf.DB.DBNamePrefix = "INF"
+
 
 	// Get Token Attributes
 	accessTokenExpiration, err := strconv.Atoi(os.Getenv("TOKEN_EXPIRATION_MIN"))

@@ -1,0 +1,5 @@
+export JWT_TOKEN_KEY="Izit4dhcUXUJN3Shy/qUQgq/44/DyyWVrVcUIVK/QMo="
+export TOKEN_EXPIRATION_MIN="10"
+export TOKEN_MINIMUM_AGE_MIN="2"
+go test
+

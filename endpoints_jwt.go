@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"log"
-	"strings"
 
 	"google.golang.org/grpc/codes"
 
@@ -103,10 +102,7 @@ func (s *authServiceServer) RenewJWT(ctx context.Context, req *api.RefreshJWTReq
 		return nil, status.Error(codes.Unavailable, "can't renew token so often")
 	}
 
-	roles := []string{}
-	if val, ok := parsedToken.Payload["roles"]; ok {
-		roles = strings.Split(val, ",")
-	}
+	roles := getRolesFromPayload(parsedToken.Payload)
 
 	// Generate new token:
 	newToken, err := generateNewToken(parsedToken.ID, roles, parsedToken.InstanceID)

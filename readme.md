@@ -24,7 +24,7 @@ go install github.com/golang/mock/mockgen
 
 Then generate mock client for the user management service:
 ```
-mockgen github.com/influenzanet/api/dist/go/user-management UserManagementApiClient > mock_user_management/um_mock.go
+mockgen -source=./api/user-management-api.pb.go UserManagementApiClient > mocks/user-management.go
 ```
 For more information about testing grpc clients with go check: https://github.com/grpc/grpc-go/blob/master/Documentation/gomock-example.md
 
@@ -43,3 +43,6 @@ docker run -p 3100:3100 authentication-service
 ```
 
 Access the API on `localhost:3100`
+
+
+You can use the key generator, to generate a random private key to sign tokens.
