@@ -3,11 +3,11 @@ package main
 import (
 	"context"
 	"errors"
-	"log"
 	"testing"
 	"time"
 
 	"github.com/golang/mock/gomock"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	api "github.com/influenzanet/authentication-service/api"
@@ -103,6 +103,10 @@ func TestLoginWithEmail(t *testing.T) {
 			Roles:      []string{"participant"},
 			InstanceId: testInstanceID,
 		}, nil)
+		mockUserManagementClient.EXPECT().TokenRefreshed(
+			gomock.Any(),
+			gomock.Any(),
+		).Return(&api.Status{}, nil)
 
 		resp, err := s.LoginWithEmail(context.Background(), req)
 		if err != nil {
@@ -139,7 +143,7 @@ func TestSignup(t *testing.T) {
 		mockUserManagementClient.EXPECT().SignupWithEmail(
 			gomock.Any(),
 			gomock.Any(),
-		).Return(nil, errors.New("missing arguments"))
+		).Return(nil, status.Error(codes.InvalidArgument, "missing arguments"))
 		resp, err := s.SignupWithEmail(context.Background(), req)
 		st, ok := status.FromError(err)
 		if !ok || st == nil || st.Message() != "missing arguments" || resp != nil {
@@ -158,7 +162,7 @@ func TestSignup(t *testing.T) {
 		mockUserManagementClient.EXPECT().SignupWithEmail(
 			gomock.Any(),
 			gomock.Any(),
-		).Return(nil, errors.New("password too weak"))
+		).Return(nil, status.Error(codes.InvalidArgument, "password too weak"))
 
 		resp, err := s.SignupWithEmail(context.Background(), req)
 		st, ok := status.FromError(err)
@@ -178,7 +182,7 @@ func TestSignup(t *testing.T) {
 		mockUserManagementClient.EXPECT().SignupWithEmail(
 			gomock.Any(),
 			gomock.Any(),
-		).Return(nil, errors.New("email not valid"))
+		).Return(nil, status.Error(codes.InvalidArgument, "email not valid"))
 
 		resp, err := s.SignupWithEmail(context.Background(), req)
 		st, ok := status.FromError(err)
@@ -198,7 +202,7 @@ func TestSignup(t *testing.T) {
 		mockUserManagementClient.EXPECT().SignupWithEmail(
 			gomock.Any(),
 			gomock.Any(),
-		).Return(nil, errors.New("user already exists"))
+		).Return(nil, status.Error(codes.Internal, "user already exists"))
 
 		resp, err := s.SignupWithEmail(context.Background(), req)
 		st, ok := status.FromError(err)
@@ -224,6 +228,10 @@ func TestSignup(t *testing.T) {
 			Roles:      []string{"participant"},
 			InstanceId: "test-inst",
 		}, nil)
+		mockUserManagementClient.EXPECT().TokenRefreshed(
+			gomock.Any(),
+			gomock.Any(),
+		).Return(&api.Status{}, nil)
 
 		resp, err := s.SignupWithEmail(context.Background(), req)
 		if err != nil {
@@ -352,7 +360,7 @@ func TestRenewJWT(t *testing.T) {
 		t.Errorf("unexpected error: %s", err)
 		return
 	}
-	refreshToken := "todo"
+	refreshToken := "TEST-REFRESH-TOKEN-STRING"
 
 	s := authServiceServer{}
 
@@ -381,11 +389,15 @@ func TestRenewJWT(t *testing.T) {
 	t.Run("with wrong access token", func(t *testing.T) {
 		req := &api.RefreshJWTRequest{
 			AccessToken:  userToken + "x",
-			RefreshToken: refreshToken + "x",
+			RefreshToken: refreshToken,
 		}
-		log.Println(req)
-		t.Error("test unimplemented")
-
+		resp, err := s.RenewJWT(context.Background(), req)
+		st, ok := status.FromError(err)
+		if !ok || st == nil || st.Message() != "wrong access token" || resp != nil {
+			t.Errorf("wrong error: %s", err.Error())
+			t.Errorf("or response: %s", resp)
+			return
+		}
 	})
 
 	// Test eagerly, when min age not reached yet
@@ -412,22 +424,37 @@ func TestRenewJWT(t *testing.T) {
 
 	t.Run("with wrong refresh token", func(t *testing.T) {
 		req := &api.RefreshJWTRequest{
-			AccessToken:  userToken + "x",
+			AccessToken:  userToken,
 			RefreshToken: userToken + "x",
 		}
-		log.Println(req)
-		t.Error("test unimplemented")
+		mockUserManagementClient.EXPECT().CheckRefreshToken(
+			gomock.Any(),
+			gomock.Any(),
+		).Return(nil, errors.New("wrong refresh token"))
+
+		_, err := s.RenewJWT(context.Background(), req)
+		if err == nil {
+			t.Error("should fails with error")
+			return
+		}
+		st, _ := status.FromError(err)
+		if st.Message() != "wrong refresh token" {
+			t.Errorf("unexpected error: %s", st.Message())
+			return
+		}
 	})
 
 	// Test renew after min age reached - wait 2 seconds
-	t.Run("with normal token", func(t *testing.T) {
+	t.Run("with normal tokens", func(t *testing.T) {
 		req := &api.RefreshJWTRequest{
 			AccessToken:  userToken,
 			RefreshToken: refreshToken,
 		}
 
-		// TODO: mock to get refresh token from user management
-
+		mockUserManagementClient.EXPECT().CheckRefreshToken(
+			gomock.Any(),
+			gomock.Any(),
+		).Return(&api.Status{}, nil)
 		mockUserManagementClient.EXPECT().TokenRefreshed(
 			gomock.Any(),
 			gomock.Any(),
@@ -456,11 +483,26 @@ func TestRenewJWT(t *testing.T) {
 			AccessToken:  userToken,
 			RefreshToken: refreshToken,
 		}
+		mockUserManagementClient.EXPECT().CheckRefreshToken(
+			gomock.Any(),
+			gomock.Any(),
+		).Return(&api.Status{}, nil)
+		mockUserManagementClient.EXPECT().TokenRefreshed(
+			gomock.Any(),
+			gomock.Any(),
+		).Return(&api.Status{}, nil)
+
 		resp, err := s.RenewJWT(context.Background(), req)
-		st, ok := status.FromError(err)
-		if !ok || st == nil || st.Message() != "invalid token" || resp != nil {
-			t.Errorf("wrong error: %s", err.Error())
-			t.Errorf("or response: %s", resp)
+		if err != nil {
+			t.Errorf("unexpected error: %s", err.Error())
+			return
+		}
+		if resp == nil {
+			t.Error("response is missing")
+			return
+		}
+		if len(resp.AccessToken) < 10 || len(resp.RefreshToken) < 10 {
+			t.Errorf("unexpected response: %s", resp)
 			return
 		}
 	})

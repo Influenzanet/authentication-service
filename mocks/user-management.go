@@ -96,6 +96,26 @@ func (mr *MockUserManagementApiClientMockRecorder) SignupWithEmail(ctx, in inter
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SignupWithEmail", reflect.TypeOf((*MockUserManagementApiClient)(nil).SignupWithEmail), varargs...)
 }
 
+// CheckRefreshToken mocks base method
+func (m *MockUserManagementApiClient) CheckRefreshToken(ctx context.Context, in *api.UserReference, opts ...grpc.CallOption) (*api.Status, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CheckRefreshToken", varargs...)
+	ret0, _ := ret[0].(*api.Status)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CheckRefreshToken indicates an expected call of CheckRefreshToken
+func (mr *MockUserManagementApiClientMockRecorder) CheckRefreshToken(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckRefreshToken", reflect.TypeOf((*MockUserManagementApiClient)(nil).CheckRefreshToken), varargs...)
+}
+
 // TokenRefreshed mocks base method
 func (m *MockUserManagementApiClient) TokenRefreshed(ctx context.Context, in *api.UserReference, opts ...grpc.CallOption) (*api.Status, error) {
 	m.ctrl.T.Helper()
@@ -382,6 +402,21 @@ func (m *MockUserManagementApiServer) SignupWithEmail(arg0 context.Context, arg1
 func (mr *MockUserManagementApiServerMockRecorder) SignupWithEmail(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SignupWithEmail", reflect.TypeOf((*MockUserManagementApiServer)(nil).SignupWithEmail), arg0, arg1)
+}
+
+// CheckRefreshToken mocks base method
+func (m *MockUserManagementApiServer) CheckRefreshToken(arg0 context.Context, arg1 *api.UserReference) (*api.Status, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CheckRefreshToken", arg0, arg1)
+	ret0, _ := ret[0].(*api.Status)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CheckRefreshToken indicates an expected call of CheckRefreshToken
+func (mr *MockUserManagementApiServerMockRecorder) CheckRefreshToken(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckRefreshToken", reflect.TypeOf((*MockUserManagementApiServer)(nil).CheckRefreshToken), arg0, arg1)
 }
 
 // TokenRefreshed mocks base method
