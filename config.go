@@ -16,7 +16,7 @@ type dbConf struct {
 	CredentialsPath string `yaml:"credentials_path"`
 	Address         string `yaml:"address"`
 	Timeout         int    `yaml:"timeout"`
-	DBNamePrefix string
+	DBNamePrefix    string
 }
 
 type dbCredentials struct {
@@ -40,7 +40,12 @@ type config struct {
 }
 
 func readConfig() {
-	data, err := ioutil.ReadFile("./configs.yaml")
+	file := os.Getenv("CONFIG_FILE")
+	if file == "" {
+		file = "./configs.yaml"
+	}
+
+	data, err := ioutil.ReadFile(file)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -51,17 +56,16 @@ func readConfig() {
 
 	conf.DB.DBNamePrefix = "INF"
 
-
 	// Get Token Attributes
 	accessTokenExpiration, err := strconv.Atoi(os.Getenv("TOKEN_EXPIRATION_MIN"))
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Fatal("TOKEN_EXPIRATION_MIN not defined or not an integer : ", err.Error())
 	}
 	conf.JWT.TokenExpiryInterval = time.Minute * time.Duration(accessTokenExpiration)
 
 	tokenMinAge, err := strconv.Atoi(os.Getenv("TOKEN_MINIMUM_AGE_MIN"))
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Fatal("TOKEN_MINIMUM_AGE_MIN not defined or not an integer : ", err.Error())
 	}
 	conf.JWT.TokenMinimumAgeMin = time.Minute * time.Duration(tokenMinAge)
 }
