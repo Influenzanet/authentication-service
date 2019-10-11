@@ -2,6 +2,8 @@ package main
 
 import (
 	"errors"
+	"log"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 )
@@ -10,9 +12,13 @@ func addTempTokenDB(t TempToken) (string, error) {
 	ctx, cancel := getContext()
 	defer cancel()
 
-	filter := bson.M{"user_id": t.UserID, "purpose": t.Purpose}
+	filter := bson.M{"user_id": t.UserID, "purpose": t.Purpose, "instance_id": t.InstanceID}
 	token := TempToken{}
 	err := getCollection().FindOne(ctx, filter).Decode(&token)
+	log.Println(err)
+	log.Println(t)
+	log.Println(token)
+	log.Println(time.Now().Unix())
 	if err == nil && !reachedExpirationTime(token.Expiration) {
 		return "", errors.New("token with purpose already exists")
 	}
@@ -41,9 +47,15 @@ func getTempTokenForUserDB(instanceID string, uid string, purpose string) (TempT
 	return t, err
 }
 
-func getTempTokenFromDB(token string) error {
-	// TODO: find one temp token by token string
-	return errors.New("not implemented")
+func getTempTokenFromDB(token string) (TempToken, error) {
+	ctx, cancel := getContext()
+	defer cancel()
+
+	filter := bson.M{"token": token}
+
+	t := TempToken{}
+	err := getCollection().FindOne(ctx, filter).Decode(&t)
+	return t, err
 }
 
 func deleteTempTokenDB(token string) error {
