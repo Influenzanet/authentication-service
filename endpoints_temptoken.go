@@ -37,7 +37,16 @@ func (s *authServiceServer) GenerateTempToken(ctx context.Context, t *api.TempTo
 }
 
 func (s *authServiceServer) ValidateTempToken(ctx context.Context, t *api.TempToken) (*api.TempTokenInfo, error) {
-	return nil, status.Error(codes.Unimplemented, "not implemented")
+	if t == nil || t.Token == "" {
+		return nil, status.Error(codes.InvalidArgument, "missing argument")
+	}
+
+	tempToken, err := getTempTokenFromDB(t.Token)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return tempToken.ToAPI(), nil
 }
 
 func (s *authServiceServer) GetTempTokens(ctx context.Context, t *api.TempTokenInfo) (*api.TempTokenInfos, error) {

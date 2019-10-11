@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"testing"
+	"time"
 
 	api "github.com/influenzanet/authentication-service/api"
 	"google.golang.org/grpc/status"
@@ -53,22 +54,70 @@ func TestGenerateTempTokenEndpoint(t *testing.T) {
 }
 
 func TestValidateTempTokenEndpoint(t *testing.T) {
-	// TODO: create test temp token
+	s := authServiceServer{}
+
+	testTempToken := TempToken{
+		UserID:     "test_user_id",
+		InstanceID: testInstanceID,
+		Purpose:    "test_purpose_validation",
+		Info:       "test_info",
+		Expiration: getExpirationTime(10 * time.Second),
+	}
+	token, err := addTempTokenDB(testTempToken)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	testTempToken.Token = token
 
 	t.Run("without payload", func(t *testing.T) {
-		t.Error("test not implemented")
+		resp, err := s.ValidateTempToken(context.Background(), nil)
+		if err == nil {
+			t.Errorf("or response: %s", resp)
+			return
+		}
+		if status.Convert(err).Message() != "missing argument" {
+			t.Errorf("wrong error: %s", err.Error())
+		}
 	})
 
 	t.Run("with empty payload", func(t *testing.T) {
-		t.Error("test not implemented")
+		resp, err := s.ValidateTempToken(context.Background(), &api.TempToken{})
+		if err == nil {
+			t.Errorf("or response: %s", resp)
+			return
+		}
+		if status.Convert(err).Message() != "missing argument" {
+			t.Errorf("wrong error: %s", err.Error())
+		}
 	})
 
 	t.Run("with not existing token", func(t *testing.T) {
-		t.Error("test not implemented")
+		resp, err := s.ValidateTempToken(context.Background(), &api.TempToken{
+			Token: testTempToken.Token + "1",
+		})
+		if err == nil {
+			t.Errorf("or response: %s", resp)
+			return
+		}
+		if status.Convert(err).Message() != "mongo: no documents in result" {
+			t.Errorf("wrong error: %s", err.Error())
+		}
 	})
 
 	t.Run("with valid payload", func(t *testing.T) {
-		t.Error("test not implemented")
+		resp, err := s.ValidateTempToken(context.Background(), &api.TempToken{
+			Token: testTempToken.Token,
+		})
+		if err != nil {
+			t.Errorf("unexpected error: %s", err.Error())
+			return
+		}
+		if resp.UserId != testTempToken.UserID || resp.InstanceId != testTempToken.InstanceID || resp.Purpose != testTempToken.Purpose || resp.Info != testTempToken.Info || resp.Expiration != testTempToken.Expiration {
+			t.Error(resp)
+			t.Error("wrong token infos")
+			return
+		}
 	})
 }
 
