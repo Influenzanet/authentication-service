@@ -122,25 +122,73 @@ func TestValidateTempTokenEndpoint(t *testing.T) {
 }
 
 func TestGetTempTokensEndpoint(t *testing.T) {
-	// TODO: create test tokens
+	s := authServiceServer{}
+
+	testTempToken := TempToken{
+		UserID:     "test_user_id",
+		InstanceID: testInstanceID,
+		Purpose:    "test_purpose_get_tokens",
+		Info:       "test_info",
+		Expiration: getExpirationTime(10 * time.Second),
+	}
+	token, err := addTempTokenDB(testTempToken)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	testTempToken.Token = token
+
 	t.Run("without payload", func(t *testing.T) {
-		t.Error("test not implemented")
+		resp, err := s.GetTempTokens(context.Background(), nil)
+		if err == nil || resp != nil {
+			t.Errorf("wrong response: %s", resp)
+			return
+		}
+		if status.Convert(err).Message() != "missing argument" {
+			t.Errorf("wrong error: %s", err.Error())
+		}
 	})
 
 	t.Run("with empty payload", func(t *testing.T) {
-		t.Error("test not implemented")
+		resp, err := s.GetTempTokens(context.Background(), &api.TempTokenInfo{})
+		if err == nil || resp != nil {
+			t.Errorf("wrong response: %s", resp)
+			return
+		}
+		if status.Convert(err).Message() != "missing argument" {
+			t.Errorf("wrong error: %s", err.Error())
+		}
 	})
 
 	t.Run("get by user_id + instace_id", func(t *testing.T) {
-		t.Error("test not implemented")
+		resp, err := s.GetTempTokens(context.Background(), &api.TempTokenInfo{
+			UserId:     testTempToken.UserID,
+			InstanceId: testTempToken.InstanceID,
+		})
+		if err != nil {
+			t.Errorf("unexpected error: %s", err.Error())
+			return
+		}
+		if len(resp.TempTokens) < 1 {
+			t.Error("token should be found.")
+			return
+		}
 	})
 
 	t.Run("get by user_id + instace_id + type", func(t *testing.T) {
-		t.Error("test not implemented")
-	})
-
-	t.Run("get by type", func(t *testing.T) {
-		t.Error("test not implemented")
+		resp, err := s.GetTempTokens(context.Background(), &api.TempTokenInfo{
+			UserId:     testTempToken.UserID,
+			InstanceId: testTempToken.InstanceID,
+			Purpose:    testTempToken.Purpose,
+		})
+		if err != nil {
+			t.Errorf("unexpected error: %s", err.Error())
+			return
+		}
+		if len(resp.TempTokens) != 1 {
+			t.Error("exactly one token should be found.")
+			return
+		}
 	})
 }
 

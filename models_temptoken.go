@@ -27,3 +27,18 @@ func (t TempToken) ToAPI() *api.TempTokenInfo {
 		InstanceId: t.InstanceID,
 	}
 }
+
+// TempTokens is an array of TempToken
+type TempTokens []TempToken
+
+// ToAPI converts from DB formate into API format
+func (items TempTokens) ToAPI() *api.TempTokenInfos {
+	res := make([]*api.TempTokenInfo, len(items))
+	for i, v := range items {
+		res[i] = v.ToAPI()
+	}
+
+	return &api.TempTokenInfos{
+		TempTokens: res,
+	}
+}

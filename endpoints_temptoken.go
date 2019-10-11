@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log"
 	"time"
 
 	api "github.com/influenzanet/authentication-service/api"
@@ -45,12 +46,26 @@ func (s *authServiceServer) ValidateTempToken(ctx context.Context, t *api.TempTo
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
+	if time.Now().Unix() > tempToken.Expiration {
+		err = deleteTempTokenDB(tempToken.Token)
+		log.Println(err)
+		return nil, status.Error(codes.InvalidArgument, "token expired")
+	}
 
 	return tempToken.ToAPI(), nil
 }
 
 func (s *authServiceServer) GetTempTokens(ctx context.Context, t *api.TempTokenInfo) (*api.TempTokenInfos, error) {
-	return nil, status.Error(codes.Unimplemented, "not implemented")
+	if t == nil || t.UserId == "" || t.InstanceId == "" {
+		return nil, status.Error(codes.InvalidArgument, "missing argument")
+	}
+
+	tokens, err := getTempTokenForUserDB(t.InstanceId, t.UserId, t.Purpose)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return tokens.ToAPI(), nil
 }
 
 func (s *authServiceServer) DeleteTempToken(ctx context.Context, t *api.TempToken) (*api.Status, error) {

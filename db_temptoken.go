@@ -31,7 +31,7 @@ func addTempTokenDB(t TempToken) (string, error) {
 	return t.Token, nil
 }
 
-func getTempTokenForUserDB(instanceID string, uid string, purpose string) (tokens []TempToken, err error) {
+func getTempTokenForUserDB(instanceID string, uid string, purpose string) (tokens TempTokens, err error) {
 	ctx, cancel := getContext()
 	defer cancel()
 
