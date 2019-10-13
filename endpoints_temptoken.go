@@ -69,9 +69,27 @@ func (s *authServiceServer) GetTempTokens(ctx context.Context, t *api.TempTokenI
 }
 
 func (s *authServiceServer) DeleteTempToken(ctx context.Context, t *api.TempToken) (*api.Status, error) {
-	return nil, status.Error(codes.Unimplemented, "not implemented")
+	if t == nil || t.Token == "" {
+		return nil, status.Error(codes.InvalidArgument, "missing argument")
+	}
+	if err := deleteTempTokenDB(t.Token); err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	return &api.Status{
+		Status: api.Status_NORMAL,
+		Msg:    "deleted",
+	}, nil
 }
 
 func (s *authServiceServer) PurgeUserTempTokens(ctx context.Context, t *api.TempTokenInfo) (*api.Status, error) {
-	return nil, status.Error(codes.Unimplemented, "not implemented")
+	if t == nil || t.UserId == "" || t.InstanceId == "" {
+		return nil, status.Error(codes.InvalidArgument, "missing argument")
+	}
+	if err := deleteAllTempTokenForUserDB(t.InstanceId, t.UserId, t.Purpose); err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	return &api.Status{
+		Status: api.Status_NORMAL,
+		Msg:    "deleted",
+	}, nil
 }

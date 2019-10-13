@@ -193,37 +193,161 @@ func TestGetTempTokensEndpoint(t *testing.T) {
 }
 
 func TestDeleteTempTokenEndpoint(t *testing.T) {
+	s := authServiceServer{}
+
+	testTempToken := TempToken{
+		UserID:     "test_user_id",
+		InstanceID: testInstanceID,
+		Purpose:    "test_purpose_delete_token",
+		Info:       "test_info",
+		Expiration: getExpirationTime(10 * time.Second),
+	}
+	token, err := addTempTokenDB(testTempToken)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	testTempToken.Token = token
+
 	t.Run("without payload", func(t *testing.T) {
-		t.Error("test not implemented")
+		resp, err := s.DeleteTempToken(context.Background(), nil)
+		if err == nil {
+			t.Errorf("or response: %s", resp)
+			return
+		}
+		if status.Convert(err).Message() != "missing argument" {
+			t.Errorf("wrong error: %s", err.Error())
+		}
 	})
 
 	t.Run("with empty payload", func(t *testing.T) {
-		t.Error("test not implemented")
+		resp, err := s.DeleteTempToken(context.Background(), &api.TempToken{})
+		if err == nil || resp != nil {
+			t.Errorf("wrong response: %s", resp)
+			return
+		}
+		if status.Convert(err).Message() != "missing argument" {
+			t.Errorf("wrong error: %s", err.Error())
+		}
 	})
 
 	t.Run("with not existing token", func(t *testing.T) {
-		t.Error("test not implemented")
+		resp, err := s.DeleteTempToken(context.Background(), &api.TempToken{
+			Token: testTempToken.Token + "1",
+		})
+		if err == nil || resp != nil {
+			t.Errorf("wrong response: %s", resp)
+			return
+		}
+		tt, err := getTempTokenFromDB(testTempToken.Token)
+		if err != nil || len(tt.Token) < 5 {
+			t.Error("token should not be deleted yet")
+			return
+		}
 	})
 
 	t.Run("with existing token", func(t *testing.T) {
-		t.Error("test not implemented")
+		_, err := s.DeleteTempToken(context.Background(), &api.TempToken{
+			Token: testTempToken.Token,
+		})
+		if err != nil {
+			t.Errorf("unexpected error: %s", err.Error())
+			return
+		}
+
+		tt, err := getTempTokenFromDB(testTempToken.Token)
+		if err == nil || len(tt.Token) > 0 {
+			t.Error("token should be deleted by now")
+			return
+		}
 	})
 }
 
 func TestPurgeUserTempTokensEndpoint(t *testing.T) {
+	s := authServiceServer{}
+
+	testTempToken := TempToken{
+		UserID:     "test_user_id",
+		InstanceID: testInstanceID,
+		Purpose:    "test_purpose_purging",
+		Info:       "test_info",
+		Expiration: getExpirationTime(10 * time.Second),
+	}
+	token, err := addTempTokenDB(testTempToken)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	testTempToken.Token = token
+
 	t.Run("without payload", func(t *testing.T) {
-		t.Error("test not implemented")
+		resp, err := s.PurgeUserTempTokens(context.Background(), nil)
+		if err == nil || resp != nil {
+			t.Errorf("wrong response: %s", resp)
+			return
+		}
+		if status.Convert(err).Message() != "missing argument" {
+			t.Errorf("wrong error: %s", err.Error())
+		}
 	})
 
 	t.Run("with empty payload", func(t *testing.T) {
-		t.Error("test not implemented")
+		resp, err := s.PurgeUserTempTokens(context.Background(), &api.TempTokenInfo{})
+		if err == nil || resp != nil {
+			t.Errorf("wrong response: %s", resp)
+			return
+		}
+		if status.Convert(err).Message() != "missing argument" {
+			t.Errorf("wrong error: %s", err.Error())
+		}
 	})
 
-	t.Run("with not exisiting user_id/instance_id combination", func(t *testing.T) {
-		t.Error("test not implemented")
+	t.Run("with not exisiting wrong instance_id", func(t *testing.T) {
+		resp, err := s.PurgeUserTempTokens(context.Background(), &api.TempTokenInfo{
+			InstanceId: testTempToken.InstanceID + "1",
+			UserId:     testTempToken.UserID,
+		})
+		if err == nil || resp != nil {
+			t.Errorf("wrong response: %s", resp)
+			return
+		}
+		tokens, err := getTempTokenForUserDB(testTempToken.InstanceID, testTempToken.UserID, "")
+		if len(tokens) < 1 {
+			t.Error("tokens shouldn't be purged yet")
+			return
+		}
+	})
+
+	t.Run("with not exisiting wrong user_id", func(t *testing.T) {
+		resp, err := s.PurgeUserTempTokens(context.Background(), &api.TempTokenInfo{
+			InstanceId: testTempToken.InstanceID,
+			UserId:     testTempToken.UserID + "1",
+		})
+		if err == nil || resp != nil {
+			t.Errorf("wrong response: %s", resp)
+			return
+		}
+		tokens, err := getTempTokenForUserDB(testTempToken.InstanceID, testTempToken.UserID, "")
+		if len(tokens) < 1 {
+			t.Error("tokens shouldn't be purged yet")
+			return
+		}
 	})
 
 	t.Run("with exisiting user_id/instance_id combination", func(t *testing.T) {
-		t.Error("test not implemented")
+		resp, err := s.PurgeUserTempTokens(context.Background(), &api.TempTokenInfo{
+			InstanceId: testTempToken.InstanceID,
+			UserId:     testTempToken.UserID,
+		})
+		if err != nil || resp == nil {
+			t.Errorf("unexpected error: %s", err.Error())
+			return
+		}
+
+		tokens, err := getTempTokenForUserDB(testTempToken.InstanceID, testTempToken.UserID, "")
+		if len(tokens) > 0 {
+			t.Error("tokens should be all purged")
+			return
+		}
 	})
 }
