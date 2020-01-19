@@ -97,7 +97,7 @@ func (mr *MockUserManagementApiClientMockRecorder) SignupWithEmail(ctx, in inter
 }
 
 // CheckRefreshToken mocks base method
-func (m *MockUserManagementApiClient) CheckRefreshToken(ctx context.Context, in *api.UserReference, opts ...grpc.CallOption) (*api.Status, error) {
+func (m *MockUserManagementApiClient) CheckRefreshToken(ctx context.Context, in *api.RefreshTokenRequest, opts ...grpc.CallOption) (*api.Status, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, in}
 	for _, a := range opts {
@@ -117,7 +117,7 @@ func (mr *MockUserManagementApiClientMockRecorder) CheckRefreshToken(ctx, in int
 }
 
 // TokenRefreshed mocks base method
-func (m *MockUserManagementApiClient) TokenRefreshed(ctx context.Context, in *api.UserReference, opts ...grpc.CallOption) (*api.Status, error) {
+func (m *MockUserManagementApiClient) TokenRefreshed(ctx context.Context, in *api.RefreshTokenRequest, opts ...grpc.CallOption) (*api.Status, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, in}
 	for _, a := range opts {
@@ -405,7 +405,7 @@ func (mr *MockUserManagementApiServerMockRecorder) SignupWithEmail(arg0, arg1 in
 }
 
 // CheckRefreshToken mocks base method
-func (m *MockUserManagementApiServer) CheckRefreshToken(arg0 context.Context, arg1 *api.UserReference) (*api.Status, error) {
+func (m *MockUserManagementApiServer) CheckRefreshToken(arg0 context.Context, arg1 *api.RefreshTokenRequest) (*api.Status, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CheckRefreshToken", arg0, arg1)
 	ret0, _ := ret[0].(*api.Status)
@@ -420,7 +420,7 @@ func (mr *MockUserManagementApiServerMockRecorder) CheckRefreshToken(arg0, arg1 
 }
 
 // TokenRefreshed mocks base method
-func (m *MockUserManagementApiServer) TokenRefreshed(arg0 context.Context, arg1 *api.UserReference) (*api.Status, error) {
+func (m *MockUserManagementApiServer) TokenRefreshed(arg0 context.Context, arg1 *api.RefreshTokenRequest) (*api.Status, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "TokenRefreshed", arg0, arg1)
 	ret0, _ := ret[0].(*api.Status)

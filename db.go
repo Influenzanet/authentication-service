@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"time"
 
@@ -10,38 +9,35 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var dbClient *mongo.Client
-var dbInstance string
+// Collections
+func collectionRefTempToken() *mongo.Collection {
+	return dbClient.Database(conf.DB.DBNamePrefix + "global-infos").Collection("temp-tokens")
+}
 
+// Connect to DB
 func dbInit() {
-	dbCreds, err := readDBcredentials(conf.DB.CredentialsPath)
+	var err error
+	dbClient, err = mongo.NewClient(
+		options.Client().ApplyURI(conf.DB.URI),
+		options.Client().SetMaxConnIdleTime(time.Duration(conf.DB.IdleConnTimeout)*time.Second),
+		options.Client().SetMaxPoolSize(conf.DB.MaxPoolSize),
+	)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// mongodb+srv://user-management-service:<PASSWORD>@influenzanettestdbcluster-pwvbz.mongodb.net/test?retryWrites=true
-	address := fmt.Sprintf(`mongodb+srv://%s:%s@%s`, dbCreds.Username, dbCreds.Password, conf.DB.Address)
-
-	dbClient, err = mongo.NewClient(options.Client().ApplyURI(address))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	dbInstance = "default-token"
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(conf.DB.Timeout)*time.Second)
+	ctx, cancel := getContext()
 	defer cancel()
 
 	err = dbClient.Connect(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
-}
 
-func getCollection() *mongo.Collection {
-	return dbClient.Database(dbInstance).Collection("tokens")
-} //
-
-func getContext() (ctx context.Context, cancel context.CancelFunc) {
-	return context.WithTimeout(context.Background(), time.Duration(conf.DB.Timeout)*time.Second)
+	ctx, conCancel := context.WithTimeout(context.Background(), time.Duration(conf.DB.Timeout)*time.Second)
+	err = dbClient.Ping(ctx, nil)
+	defer conCancel()
+	if err != nil {
+		log.Fatal("fail to connect to DB: " + err.Error())
+	}
 }

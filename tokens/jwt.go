@@ -1,4 +1,4 @@
-package main
+package tokens
 
 import (
 	"errors"
@@ -17,15 +17,17 @@ var (
 	secretKeyEnc string
 )
 
-type userClaims struct {
+// UserClaims - Information a token enocodes
+type UserClaims struct {
 	ID         string            `json:"id,omitempty"`
 	InstanceID string            `json:"instance_id,omitempty"`
 	Payload    map[string]string `json:"payload,omitempty"`
 	jwt.StandardClaims
 }
 
-func checkTokenAgeMaturity(issuedAt int64) bool {
-	return time.Now().Unix() < time.Unix(issuedAt, 0).Add(conf.JWT.TokenMinimumAgeMin).Unix()
+// CheckTokenAgeMaturity to see if token age is old enough
+func CheckTokenAgeMaturity(issuedAt int64, minAge time.Duration) bool {
+	return time.Now().Unix() < time.Unix(issuedAt, 0).Add(minAge).Unix()
 }
 
 func getSecretKey() (newSecretKey []byte, err error) {
@@ -46,7 +48,7 @@ func getSecretKey() (newSecretKey []byte, err error) {
 }
 
 // GenerateNewToken create and signes a new token
-func generateNewToken(userID string, userRoles []string, instanceID string) (string, error) {
+func GenerateNewToken(userID string, userRoles []string, instanceID string, experiresIn time.Duration) (string, error) {
 	payload := map[string]string{}
 
 	if len(userRoles) > 0 {
@@ -54,12 +56,12 @@ func generateNewToken(userID string, userRoles []string, instanceID string) (str
 	}
 
 	// Create the Claims
-	claims := userClaims{
+	claims := UserClaims{
 		userID,
 		instanceID,
 		payload,
 		jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(conf.JWT.TokenExpiryInterval).Unix(),
+			ExpiresAt: time.Now().Add(experiresIn).Unix(),
 			IssuedAt:  time.Now().Unix(),
 		},
 	}
@@ -67,7 +69,7 @@ func generateNewToken(userID string, userRoles []string, instanceID string) (str
 	// Create the token
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	secretKey, err := getSecretKey()
+	_, err := getSecretKey()
 	if err != nil {
 		return "", err
 	}
@@ -77,14 +79,14 @@ func generateNewToken(userID string, userRoles []string, instanceID string) (str
 	return tokenString, err
 }
 
-// validateToken parses and validates the token string
-func validateToken(tokenString string) (claims *userClaims, valid bool, err error) {
-	secretKey, err := getSecretKey()
+// ValidateToken parses and validates the token string
+func ValidateToken(tokenString string) (claims *UserClaims, valid bool, err error) {
+	_, err = getSecretKey()
 	if err != nil {
 		return nil, false, err
 	}
 
-	token, err := jwt.ParseWithClaims(tokenString, &userClaims{}, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &UserClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
@@ -93,7 +95,7 @@ func validateToken(tokenString string) (claims *userClaims, valid bool, err erro
 	if token == nil {
 		return
 	}
-	claims, valid = token.Claims.(*userClaims)
+	claims, valid = token.Claims.(*UserClaims)
 	valid = valid && token.Valid
 	return
 }

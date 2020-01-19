@@ -12,13 +12,14 @@ import (
 
 	api "github.com/influenzanet/authentication-service/api"
 	api_mock "github.com/influenzanet/authentication-service/mocks"
+	"github.com/influenzanet/authentication-service/tokens"
 )
 
 func TestLoginWithEmail(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 	mockUserManagementClient := api_mock.NewMockUserManagementApiClient(mockCtrl)
-	userManagementClient = mockUserManagementClient
+	clients.userManagement = mockUserManagementClient
 
 	s := authServiceServer{}
 
@@ -124,7 +125,7 @@ func TestSignup(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 	mockUserManagementClient := api_mock.NewMockUserManagementApiClient(mockCtrl)
-	userManagementClient = mockUserManagementClient
+	clients.userManagement = mockUserManagementClient
 
 	s := authServiceServer{}
 
@@ -272,8 +273,8 @@ func TestValidateJWT(t *testing.T) {
 		}
 	})
 
-	adminToken, err1 := generateNewToken("test-admin-id", []string{"PARTICIPANT", "ADMIN"}, testInstanceID)
-	userToken, err2 := generateNewToken("test-user-id", []string{"PARTICIPANT"}, testInstanceID)
+	adminToken, err1 := tokens.GenerateNewToken("test-admin-id", []string{"PARTICIPANT", "ADMIN"}, testInstanceID, conf.JWT.TokenExpiryInterval)
+	userToken, err2 := tokens.GenerateNewToken("test-user-id", []string{"PARTICIPANT"}, testInstanceID, conf.JWT.TokenExpiryInterval)
 	if err1 != nil || err2 != nil {
 		t.Errorf("unexpected error: %s or %s", err1, err2)
 		return
@@ -303,7 +304,7 @@ func TestValidateJWT(t *testing.T) {
 			t.Errorf("unexpected error: %s", err.Error())
 			return
 		}
-		roles := getRolesFromPayload(resp.Payload)
+		roles := tokens.GetRolesFromPayload(resp.Payload)
 		if resp == nil || resp.InstanceId != testInstanceID || resp.Id != "test-user-id" || len(roles) != 1 || roles[0] != "PARTICIPANT" {
 			t.Errorf("unexpected response: %s", resp)
 			return
@@ -320,7 +321,7 @@ func TestValidateJWT(t *testing.T) {
 			t.Errorf("unexpected error: %s", err.Error())
 			return
 		}
-		roles := getRolesFromPayload(resp.Payload)
+		roles := tokens.GetRolesFromPayload(resp.Payload)
 		if resp == nil || len(roles) < 2 {
 			t.Errorf("unexpected response: %s", resp)
 			return
@@ -350,12 +351,12 @@ func TestRenewJWT(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 	mockUserManagementClient := api_mock.NewMockUserManagementApiClient(mockCtrl)
-	userManagementClient = mockUserManagementClient
+	clients.userManagement = mockUserManagementClient
 
 	conf.JWT.TokenExpiryInterval = time.Second * 2
 	conf.JWT.TokenMinimumAgeMin = time.Second * 1
 
-	userToken, err := generateNewToken("test-user-id", []string{"PARTICIPANT"}, testInstanceID)
+	userToken, err := tokens.GenerateNewToken("test-user-id", []string{"PARTICIPANT"}, testInstanceID, conf.JWT.TokenExpiryInterval)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 		return

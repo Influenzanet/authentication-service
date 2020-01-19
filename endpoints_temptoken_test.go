@@ -6,6 +6,7 @@ import (
 	"time"
 
 	api "github.com/influenzanet/authentication-service/api"
+	"github.com/influenzanet/authentication-service/tokens"
 	"google.golang.org/grpc/status"
 )
 
@@ -61,7 +62,7 @@ func TestValidateTempTokenEndpoint(t *testing.T) {
 		InstanceID: testInstanceID,
 		Purpose:    "test_purpose_validation",
 		Info:       "test_info",
-		Expiration: getExpirationTime(10 * time.Second),
+		Expiration: tokens.GetExpirationTime(10 * time.Second),
 	}
 	token, err := addTempTokenDB(testTempToken)
 	if err != nil {
@@ -129,7 +130,7 @@ func TestGetTempTokensEndpoint(t *testing.T) {
 		InstanceID: testInstanceID,
 		Purpose:    "test_purpose_get_tokens",
 		Info:       "test_info",
-		Expiration: getExpirationTime(10 * time.Second),
+		Expiration: tokens.GetExpirationTime(10 * time.Second),
 	}
 	token, err := addTempTokenDB(testTempToken)
 	if err != nil {
@@ -200,7 +201,7 @@ func TestDeleteTempTokenEndpoint(t *testing.T) {
 		InstanceID: testInstanceID,
 		Purpose:    "test_purpose_delete_token",
 		Info:       "test_info",
-		Expiration: getExpirationTime(10 * time.Second),
+		Expiration: tokens.GetExpirationTime(10 * time.Second),
 	}
 	token, err := addTempTokenDB(testTempToken)
 	if err != nil {
@@ -271,7 +272,7 @@ func TestPurgeUserTempTokensEndpoint(t *testing.T) {
 		InstanceID: testInstanceID,
 		Purpose:    "test_purpose_purging",
 		Info:       "test_info",
-		Expiration: getExpirationTime(10 * time.Second),
+		Expiration: tokens.GetExpirationTime(10 * time.Second),
 	}
 	token, err := addTempTokenDB(testTempToken)
 	if err != nil {
@@ -312,6 +313,10 @@ func TestPurgeUserTempTokensEndpoint(t *testing.T) {
 			return
 		}
 		tokens, err := getTempTokenForUserDB(testTempToken.InstanceID, testTempToken.UserID, "")
+		if err != nil {
+			t.Error(err)
+			return
+		}
 		if len(tokens) < 1 {
 			t.Error("tokens shouldn't be purged yet")
 			return
@@ -328,6 +333,10 @@ func TestPurgeUserTempTokensEndpoint(t *testing.T) {
 			return
 		}
 		tokens, err := getTempTokenForUserDB(testTempToken.InstanceID, testTempToken.UserID, "")
+		if err != nil {
+			t.Error(err)
+			return
+		}
 		if len(tokens) < 1 {
 			t.Error("tokens shouldn't be purged yet")
 			return
@@ -345,6 +354,10 @@ func TestPurgeUserTempTokensEndpoint(t *testing.T) {
 		}
 
 		tokens, err := getTempTokenForUserDB(testTempToken.InstanceID, testTempToken.UserID, "")
+		if err != nil {
+			t.Error(err)
+			return
+		}
 		if len(tokens) > 0 {
 			t.Error("tokens should be all purged")
 			return

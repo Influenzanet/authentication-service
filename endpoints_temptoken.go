@@ -6,6 +6,7 @@ import (
 	"time"
 
 	api "github.com/influenzanet/authentication-service/api"
+	"github.com/influenzanet/authentication-service/tokens"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -24,7 +25,7 @@ func (s *authServiceServer) GenerateTempToken(ctx context.Context, t *api.TempTo
 	}
 
 	if tempToken.Expiration == 0 {
-		tempToken.Expiration = getExpirationTime(time.Hour * 24 * 10)
+		tempToken.Expiration = tokens.GetExpirationTime(time.Hour * 24 * 10)
 	}
 
 	token, err := addTempTokenDB(tempToken)

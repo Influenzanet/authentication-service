@@ -3,16 +3,23 @@ package main
 import (
 	"log"
 	"net"
-	"strconv"
 
 	api "github.com/influenzanet/authentication-service/api"
+	"go.mongodb.org/mongo-driver/mongo"
 	"google.golang.org/grpc"
 )
 
 type authServiceServer struct {
 }
 
-var userManagementClient api.UserManagementApiClient
+var conf Config
+var dbClient *mongo.Client
+var clients = APIClients{}
+
+// APIClients holds the service clients to the internal services
+type APIClients struct {
+	userManagement api.UserManagementApiClient
+}
 
 func connectToUserManagementServer() *grpc.ClientConn {
 	conn, err := grpc.Dial(conf.ServiceURLs.UserManagement, grpc.WithInsecure())
@@ -23,22 +30,26 @@ func connectToUserManagementServer() *grpc.ClientConn {
 }
 
 func init() {
-	readConfig()
+	initConfig()
 	dbInit()
+	log.Println("initialization ready")
 }
 
 func main() {
+	log.Println("connect to user management service")
 	userManagementServerConn := connectToUserManagementServer()
 	defer userManagementServerConn.Close()
+	clients.userManagement = api.NewUserManagementApiClient(userManagementServerConn)
 
-	userManagementClient = api.NewUserManagementApiClient(userManagementServerConn)
-
-	log.Println("wait connections on port " + strconv.Itoa(conf.ListenPort))
-	lis, err := net.Listen("tcp", ":"+strconv.Itoa(conf.ListenPort))
+	lis, err := net.Listen("tcp", ":"+conf.Port)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
+	log.Println("wait connections on port " + conf.Port)
+
 	grpcServer := grpc.NewServer()
 	api.RegisterAuthServiceApiServer(grpcServer, &authServiceServer{})
-	grpcServer.Serve(lis)
+	if err = grpcServer.Serve(lis); err != nil {
+		log.Fatal(err)
+	}
 }

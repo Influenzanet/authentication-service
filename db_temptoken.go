@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 
+	"github.com/influenzanet/authentication-service/tokens"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -12,18 +13,18 @@ func addTempTokenDB(t TempToken) (string, error) {
 
 	filter := bson.M{"user_id": t.UserID, "purpose": t.Purpose, "instance_id": t.InstanceID}
 	token := TempToken{}
-	err := getCollection().FindOne(ctx, filter).Decode(&token)
+	err := collectionRefTempToken().FindOne(ctx, filter).Decode(&token)
 
-	if err == nil && !reachedExpirationTime(token.Expiration) {
+	if err == nil && !tokens.ReachedExpirationTime(token.Expiration) {
 		return "", errors.New("token with purpose already exists")
 	}
 
-	t.Token, err = generateUniqueTokenString()
+	t.Token, err = tokens.GenerateUniqueTokenString()
 	if err != nil {
 		return "", err
 	}
 
-	_, err = getCollection().InsertOne(ctx, t)
+	_, err = collectionRefTempToken().InsertOne(ctx, t)
 	if err != nil {
 		return "", err
 	}
@@ -40,7 +41,7 @@ func getTempTokenForUserDB(instanceID string, uid string, purpose string) (token
 		filter["purpose"] = purpose
 	}
 
-	cur, err := getCollection().Find(ctx, filter)
+	cur, err := collectionRefTempToken().Find(ctx, filter)
 	if err != nil {
 		return tokens, err
 	}
@@ -69,7 +70,7 @@ func getTempTokenFromDB(token string) (TempToken, error) {
 	filter := bson.M{"token": token}
 
 	t := TempToken{}
-	err := getCollection().FindOne(ctx, filter).Decode(&t)
+	err := collectionRefTempToken().FindOne(ctx, filter).Decode(&t)
 	return t, err
 }
 
@@ -78,7 +79,7 @@ func deleteTempTokenDB(token string) error {
 	defer cancel()
 
 	filter := bson.M{"token": token}
-	res, err := getCollection().DeleteOne(ctx, filter)
+	res, err := collectionRefTempToken().DeleteOne(ctx, filter)
 	if err != nil {
 		return err
 	}
@@ -96,7 +97,7 @@ func deleteAllTempTokenForUserDB(instanceID string, userID string, purpose strin
 	if len(purpose) > 0 {
 		filter["purpose"] = purpose
 	}
-	res, err := getCollection().DeleteMany(ctx, filter)
+	res, err := collectionRefTempToken().DeleteMany(ctx, filter)
 	if err != nil {
 		return err
 	}

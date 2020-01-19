@@ -1,84 +1,75 @@
 package main
 
 import (
-	"io/ioutil"
+	"fmt"
 	"log"
 	"os"
 	"strconv"
 	"time"
-
-	yaml "gopkg.in/yaml.v2"
 )
 
-var conf config
-
-type dbConf struct {
-	CredentialsPath string `yaml:"credentials_path"`
-	Address         string `yaml:"address"`
-	Timeout         int    `yaml:"timeout"`
-	DBNamePrefix    string
-}
-
-type dbCredentials struct {
-	Username string `yaml:"username"`
-	Password string `yaml:"password"`
-}
-
-type jwtConf struct {
-	SecretKey           string
-	TokenExpiryInterval time.Duration
-	TokenMinimumAgeMin  time.Duration
-}
-
-type config struct {
-	ListenPort  int `yaml:"listen_port"`
+// Config is the structure that holds all global configuration data
+type Config struct {
+	Port string
+	DB   struct {
+		URI             string
+		DBNamePrefix    string
+		Timeout         int
+		MaxPoolSize     uint64
+		IdleConnTimeout int
+	}
+	JWT struct {
+		TokenMinimumAgeMin  time.Duration // interpreted in minutes later
+		TokenExpiryInterval time.Duration // interpreted in minutes later
+	}
 	ServiceURLs struct {
-		UserManagement string `yaml:"user_management"`
-	} `yaml:"service_urls"`
-	DB  dbConf `yaml:"db"`
-	JWT jwtConf
+		UserManagement string
+	}
 }
 
-func readConfig() {
-	file := os.Getenv("CONFIG_FILE")
-	if file == "" {
-		file = "./configs.yaml"
-	}
+func initConfig() {
+	conf.Port = os.Getenv("AUTH_SERVICE_LISTEN_PORT")
+	getDBConfig()
+	getJWTConfig()
+}
 
-	data, err := ioutil.ReadFile(file)
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = yaml.Unmarshal([]byte(data), &conf)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	conf.DB.DBNamePrefix = "INF"
-
-	// Get Token Attributes
+func getJWTConfig() {
 	accessTokenExpiration, err := strconv.Atoi(os.Getenv("TOKEN_EXPIRATION_MIN"))
 	if err != nil {
-		log.Fatal("TOKEN_EXPIRATION_MIN not defined or not an integer : ", err.Error())
+		log.Fatal("TOKEN_EXPIRATION_MIN: " + err.Error())
+	}
+	i2, err := strconv.Atoi(os.Getenv("TOKEN_MINIMUM_AGE_MIN"))
+	if err != nil {
+		log.Fatal("TOKEN_MINIMUM_AGE_MIN: " + err.Error())
 	}
 	conf.JWT.TokenExpiryInterval = time.Minute * time.Duration(accessTokenExpiration)
-
-	tokenMinAge, err := strconv.Atoi(os.Getenv("TOKEN_MINIMUM_AGE_MIN"))
-	if err != nil {
-		log.Fatal("TOKEN_MINIMUM_AGE_MIN not defined or not an integer : ", err.Error())
-	}
-	conf.JWT.TokenMinimumAgeMin = time.Minute * time.Duration(tokenMinAge)
+	conf.JWT.TokenMinimumAgeMin = time.Minute * time.Duration(i2)
 }
 
-func readDBcredentials(path string) (dbCredentials, error) {
-	var dbCreds dbCredentials
-	data, err := ioutil.ReadFile(path)
-	if err != nil {
-		return dbCreds, err
+func getDBConfig() {
+	connStr := os.Getenv("DB_CONNECTION_STR")
+	username := os.Getenv("DB_USERNAME")
+	password := os.Getenv("DB_PASSWORD")
+	prefix := os.Getenv("DB_PREFIX") // Used in test mode
+	if connStr == "" || username == "" || password == "" {
+		log.Fatal("Couldn't read DB credentials.")
 	}
-	err = yaml.Unmarshal([]byte(data), &dbCreds)
+	conf.DB.URI = fmt.Sprintf(`mongodb%s://%s:%s@%s`, prefix, username, password, connStr)
+
+	var err error
+	conf.DB.Timeout, err = strconv.Atoi(os.Getenv("DB_TIMEOUT"))
 	if err != nil {
-		return dbCreds, err
+		log.Fatal("DB_TIMEOUT: " + err.Error())
 	}
-	return dbCreds, nil
+	conf.DB.IdleConnTimeout, err = strconv.Atoi(os.Getenv("DB_IDLE_CONN_TIMEOUT"))
+	if err != nil {
+		log.Fatal("DB_IDLE_CONN_TIMEOUT" + err.Error())
+	}
+	mps, err := strconv.Atoi(os.Getenv("DB_MAX_POOL_SIZE"))
+	conf.DB.MaxPoolSize = uint64(mps)
+	if err != nil {
+		log.Fatal("DB_MAX_POOL_SIZE: " + err.Error())
+	}
+
+	conf.DB.DBNamePrefix = os.Getenv("DB_DB_NAME_PREFIX")
 }

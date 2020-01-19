@@ -3,6 +3,8 @@ package main
 import (
 	"testing"
 	"time"
+
+	"github.com/influenzanet/authentication-service/tokens"
 )
 
 // Testing Database Interface methods
@@ -11,7 +13,7 @@ func TestDbInterfaceMethodsForTempToken(t *testing.T) {
 		UserID:     "test_user_id",
 		Purpose:    "test_purpose1",
 		InstanceID: testInstanceID,
-		Expiration: getExpirationTime(10 * time.Second),
+		Expiration: tokens.GetExpirationTime(10 * time.Second),
 	}
 	tokenStr := ""
 
@@ -25,7 +27,7 @@ func TestDbInterfaceMethodsForTempToken(t *testing.T) {
 
 		testTempToken2 := testTempToken
 		testTempToken2.Purpose = "test_purpose2"
-		ts, err = addTempTokenDB(testTempToken2)
+		_, err = addTempTokenDB(testTempToken2)
 		if err != nil {
 			t.Errorf(err.Error())
 			return
