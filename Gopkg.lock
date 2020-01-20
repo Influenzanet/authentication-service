@@ -2,6 +2,14 @@
 
 
 [[projects]]
+  digest = "1:938f79d09131c6204cee2c363a6e9066a369bc1977f09028ca549f44a836b734"
+  name = "github.com/DataDog/zstd"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "8fdb579680349497546a04291cedfff98a7829a0"
+  version = "v1.4.4"
+
+[[projects]]
   digest = "1:76dc72490af7174349349838f2fe118996381b31ea83243812a97e5a0fd5ed55"
   name = "github.com/dgrijalva/jwt-go"
   packages = ["."]
@@ -49,6 +57,14 @@
   revision = "ff6b7dc882cf4cfba7ee0b9f7dcc1ac096c554aa"
 
 [[projects]]
+  digest = "1:9e1d37b58d17113ec3cb5608ac0382313c5b59470b94ed97d0976e69c7022314"
+  name = "github.com/pkg/errors"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "614d223910a179a466c1767a985424175c39b465"
+  version = "v0.9.1"
+
+[[projects]]
   branch = "master"
   digest = "1:40fdfd6ab85ca32b6935853bbba35935dcb1d796c8135efd85947566c76e662e"
   name = "github.com/xdg/scram"
@@ -65,11 +81,12 @@
   revision = "73f8eece6fdcd902c185bf651de50f3828bed5ed"
 
 [[projects]]
-  digest = "1:27e22fe552475e0b843c0bffe24e6bc5c55cb4c5d68d119b8c79af08b1903bb4"
+  digest = "1:f44e6646a34c7d251bcde34fe679235317340d0374a2d9f992a5fbf52d921aa0"
   name = "go.mongodb.org/mongo-driver"
   packages = [
     "bson",
     "bson/bsoncodec",
+    "bson/bsonoptions",
     "bson/bsonrw",
     "bson/bsontype",
     "bson/primitive",
@@ -91,6 +108,8 @@
     "x/mongo/driver/connstring",
     "x/mongo/driver/description",
     "x/mongo/driver/dns",
+    "x/mongo/driver/mongocrypt",
+    "x/mongo/driver/mongocrypt/options",
     "x/mongo/driver/operation",
     "x/mongo/driver/session",
     "x/mongo/driver/topology",
@@ -98,8 +117,8 @@
     "x/mongo/driver/wiremessage",
   ]
   pruneopts = "UT"
-  revision = "1261197350f3ad46a907489aee7ecc49b39efb82"
-  version = "v1.1.2"
+  revision = "55b507b3e45a2ef5dc1d5a4cba3333c45dce443c"
+  version = "v1.2.1"
 
 [[projects]]
   branch = "master"
@@ -107,11 +126,11 @@
   name = "golang.org/x/crypto"
   packages = ["pbkdf2"]
   pruneopts = "UT"
-  revision = "af544f31c8ac5794d2134b792e9eb714d9d8f9ce"
+  revision = "530e935923ad688be97c15eeb8e5ee42ebf2b54a"
 
 [[projects]]
   branch = "master"
-  digest = "1:5d2e0d373f388bb7479addcb5e4d55b77a00f8db77f1cd7a1482cde2c32f0eaf"
+  digest = "1:b1be25d431e33548fb8b3b26251e3cd05d5e50e2f9637931485a810e77760c0a"
   name = "golang.org/x/net"
   packages = [
     "http/httpguts",
@@ -122,7 +141,7 @@
     "trace",
   ]
   pruneopts = "UT"
-  revision = "d66e71096ffb9f08f36d9aefcae80ce319de6d68"
+  revision = "6afb5195e5aab057fda82e27171243402346b0ad"
 
 [[projects]]
   branch = "master"
@@ -134,11 +153,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:7c927f17d868be652a4cfe7de23e4292dea5b14d974a1d536e3b7cb7e79fd695"
+  digest = "1:e13350b7207ecc34977340d53522e0335dd36ed86ca7c346a36d2e88eb0fadfc"
   name = "golang.org/x/sys"
   packages = ["unix"]
   pruneopts = "UT"
-  revision = "b09406accb4736d857a32bf9444cd7edae2ffa79"
+  revision = "59e60aa80a0c64fa4b088976ee16ad7f04252c25"
 
 [[projects]]
   digest = "1:8d8faad6b12a3a4c819a3f9618cb6ee1fa1cfc33253abeeea8b55336721e3405"
@@ -171,13 +190,15 @@
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
   pruneopts = "UT"
-  revision = "548a555dbc03994223efbaba0090152849259498"
+  revision = "32f20d992d240fbca6ef7dec6c05d1f024314e02"
 
 [[projects]]
-  digest = "1:6cd77d0b616d2dcebd363dfecba593f27b0151fc82cdb5fbfb96c5a7cfbc95b5"
+  digest = "1:3fe55026bb11519b45c0fc9d848fd779028b868dc62f5563c518cf850c7421d5"
   name = "google.golang.org/grpc"
   packages = [
     ".",
+    "attributes",
+    "backoff",
     "balancer",
     "balancer/base",
     "balancer/roundrobin",
@@ -193,10 +214,13 @@
     "internal/backoff",
     "internal/balancerload",
     "internal/binarylog",
+    "internal/buffer",
     "internal/channelz",
     "internal/envconfig",
     "internal/grpcrand",
     "internal/grpcsync",
+    "internal/resolver/dns",
+    "internal/resolver/passthrough",
     "internal/syscall",
     "internal/transport",
     "keepalive",
@@ -204,24 +228,14 @@
     "naming",
     "peer",
     "resolver",
-    "resolver/dns",
-    "resolver/passthrough",
     "serviceconfig",
     "stats",
     "status",
     "tap",
   ]
   pruneopts = "UT"
-  revision = "f6d0f9ee430895e87ef1ceb5ac8f39725bafceef"
-  version = "v1.24.0"
-
-[[projects]]
-  digest = "1:59f10c1537d2199d9115d946927fe31165959a95190849c82ff11e05803528b0"
-  name = "gopkg.in/yaml.v2"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "f221b8435cfb71e54062f6c6e99e9ade30b124d5"
-  version = "v2.2.4"
+  revision = "f5b0812e6fe574d90da76b205e9eb51f6ddb1919"
+  version = "v1.26.0"
 
 [solve-meta]
   analyzer-name = "dep"
@@ -238,7 +252,6 @@
     "google.golang.org/grpc",
     "google.golang.org/grpc/codes",
     "google.golang.org/grpc/status",
-    "gopkg.in/yaml.v2",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -29,8 +29,13 @@ type Config struct {
 
 func initConfig() {
 	conf.Port = os.Getenv("AUTH_SERVICE_LISTEN_PORT")
+	getURLs()
 	getDBConfig()
 	getJWTConfig()
+}
+
+func getURLs() {
+	conf.ServiceURLs.UserManagement = os.Getenv("ADDR_USER_MANAGEMENT_SERVICE")
 }
 
 func getJWTConfig() {
