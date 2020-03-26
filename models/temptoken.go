@@ -1,4 +1,4 @@
-package main
+package models
 
 import (
 	api "github.com/influenzanet/authentication-service/api"
@@ -11,9 +11,9 @@ type TempToken struct {
 	Token      string             `bson:"token" json:"token"`
 	Expiration int64              `bson:"expiration" json:"expiration"`
 	Purpose    string             `bson:"purpose" json:"purpose"`
-	UserID     string             `bson:"user_id" json:"user_id"`
+	UserID     string             `bson:"userID" json:"userID"`
 	Info       string             `bson:"info" json:"info"`
-	InstanceID string             `bson:"instance_id" json:"instance_id"`
+	InstanceID string             `bson:"instanceID" json:"instanceID"`
 }
 
 // ToAPI converts the object from DB to API format

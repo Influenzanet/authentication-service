@@ -1,15 +1,17 @@
 package main
 
 import (
+	"log"
 	"testing"
 	"time"
 
+	"github.com/influenzanet/authentication-service/models"
 	"github.com/influenzanet/authentication-service/tokens"
 )
 
 // Testing Database Interface methods
 func TestDbInterfaceMethodsForTempToken(t *testing.T) {
-	testTempToken := TempToken{
+	testTempToken := models.TempToken{
 		UserID:     "test_user_id",
 		Purpose:    "test_purpose1",
 		InstanceID: testInstanceID,
@@ -30,14 +32,6 @@ func TestDbInterfaceMethodsForTempToken(t *testing.T) {
 		_, err = addTempTokenDB(testTempToken2)
 		if err != nil {
 			t.Errorf(err.Error())
-			return
-		}
-	})
-
-	t.Run("Try to add duplicate temporary token to DB", func(t *testing.T) {
-		_, err := addTempTokenDB(testTempToken)
-		if err == nil {
-			t.Errorf("created duplicate TempToken")
 			return
 		}
 	})
@@ -109,6 +103,7 @@ func TestDbInterfaceMethodsForTempToken(t *testing.T) {
 			t.Error(err)
 			return
 		}
+		log.Println(tt)
 		if len(tt) < 2 {
 			t.Error("tokens should be found")
 			return

@@ -6,17 +6,18 @@ import (
 	"time"
 
 	api "github.com/influenzanet/authentication-service/api"
+	"github.com/influenzanet/authentication-service/models"
 	"github.com/influenzanet/authentication-service/tokens"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
 func (s *authServiceServer) GenerateTempToken(ctx context.Context, t *api.TempTokenInfo) (*api.TempToken, error) {
-	if t == nil || t.UserId == "" || t.InstanceId == "" || t.Purpose == "" {
+	if t == nil || t.Purpose == "" {
 		return nil, status.Error(codes.InvalidArgument, "missing argument")
 	}
 
-	tempToken := TempToken{
+	tempToken := models.TempToken{
 		UserID:     t.UserId,
 		InstanceID: t.InstanceId,
 		Purpose:    t.Purpose,
@@ -76,6 +77,7 @@ func (s *authServiceServer) DeleteTempToken(ctx context.Context, t *api.TempToke
 	if err := deleteTempTokenDB(t.Token); err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
+
 	return &api.Status{
 		Status: api.Status_NORMAL,
 		Msg:    "deleted",

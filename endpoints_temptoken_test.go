@@ -6,6 +6,7 @@ import (
 	"time"
 
 	api "github.com/influenzanet/authentication-service/api"
+	"github.com/influenzanet/authentication-service/models"
 	"github.com/influenzanet/authentication-service/tokens"
 	"google.golang.org/grpc/status"
 )
@@ -57,7 +58,7 @@ func TestGenerateTempTokenEndpoint(t *testing.T) {
 func TestValidateTempTokenEndpoint(t *testing.T) {
 	s := authServiceServer{}
 
-	testTempToken := TempToken{
+	testTempToken := models.TempToken{
 		UserID:     "test_user_id",
 		InstanceID: testInstanceID,
 		Purpose:    "test_purpose_validation",
@@ -125,7 +126,7 @@ func TestValidateTempTokenEndpoint(t *testing.T) {
 func TestGetTempTokensEndpoint(t *testing.T) {
 	s := authServiceServer{}
 
-	testTempToken := TempToken{
+	testTempToken := models.TempToken{
 		UserID:     "test_user_id",
 		InstanceID: testInstanceID,
 		Purpose:    "test_purpose_get_tokens",
@@ -196,7 +197,7 @@ func TestGetTempTokensEndpoint(t *testing.T) {
 func TestDeleteTempTokenEndpoint(t *testing.T) {
 	s := authServiceServer{}
 
-	testTempToken := TempToken{
+	testTempToken := models.TempToken{
 		UserID:     "test_user_id",
 		InstanceID: testInstanceID,
 		Purpose:    "test_purpose_delete_token",
@@ -267,7 +268,7 @@ func TestDeleteTempTokenEndpoint(t *testing.T) {
 func TestPurgeUserTempTokensEndpoint(t *testing.T) {
 	s := authServiceServer{}
 
-	testTempToken := TempToken{
+	testTempToken := models.TempToken{
 		UserID:     "test_user_id",
 		InstanceID: testInstanceID,
 		Purpose:    "test_purpose_purging",

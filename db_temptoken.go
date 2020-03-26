@@ -3,40 +3,33 @@ package main
 import (
 	"errors"
 
+	"github.com/influenzanet/authentication-service/models"
 	"github.com/influenzanet/authentication-service/tokens"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func addTempTokenDB(t TempToken) (string, error) {
+func addTempTokenDB(t models.TempToken) (token string, err error) {
 	ctx, cancel := getContext()
 	defer cancel()
 
-	filter := bson.M{"user_id": t.UserID, "purpose": t.Purpose, "instance_id": t.InstanceID}
-	token := TempToken{}
-	err := collectionRefTempToken().FindOne(ctx, filter).Decode(&token)
-
-	if err == nil && !tokens.ReachedExpirationTime(token.Expiration) {
-		return "", errors.New("token with purpose already exists")
-	}
-
 	t.Token, err = tokens.GenerateUniqueTokenString()
 	if err != nil {
-		return "", err
+		return token, err
 	}
 
 	_, err = collectionRefTempToken().InsertOne(ctx, t)
 	if err != nil {
-		return "", err
+		return token, err
 	}
-
-	return t.Token, nil
+	token = t.Token
+	return
 }
 
-func getTempTokenForUserDB(instanceID string, uid string, purpose string) (tokens TempTokens, err error) {
+func getTempTokenForUserDB(instanceID string, uid string, purpose string) (tokens models.TempTokens, err error) {
 	ctx, cancel := getContext()
 	defer cancel()
 
-	filter := bson.M{"instance_id": instanceID, "user_id": uid}
+	filter := bson.M{"instanceID": instanceID, "userID": uid}
 	if len(purpose) > 0 {
 		filter["purpose"] = purpose
 	}
@@ -47,9 +40,9 @@ func getTempTokenForUserDB(instanceID string, uid string, purpose string) (token
 	}
 	defer cur.Close(ctx)
 
-	tokens = []TempToken{}
+	tokens = []models.TempToken{}
 	for cur.Next(ctx) {
-		var result TempToken
+		var result models.TempToken
 		err := cur.Decode(&result)
 		if err != nil {
 			return tokens, err
@@ -63,13 +56,13 @@ func getTempTokenForUserDB(instanceID string, uid string, purpose string) (token
 	return tokens, nil
 }
 
-func getTempTokenFromDB(token string) (TempToken, error) {
+func getTempTokenFromDB(token string) (models.TempToken, error) {
 	ctx, cancel := getContext()
 	defer cancel()
 
 	filter := bson.M{"token": token}
 
-	t := TempToken{}
+	t := models.TempToken{}
 	err := collectionRefTempToken().FindOne(ctx, filter).Decode(&t)
 	return t, err
 }
@@ -93,7 +86,7 @@ func deleteAllTempTokenForUserDB(instanceID string, userID string, purpose strin
 	ctx, cancel := getContext()
 	defer cancel()
 
-	filter := bson.M{"instance_id": instanceID, "user_id": userID}
+	filter := bson.M{"instanceID": instanceID, "userID": userID}
 	if len(purpose) > 0 {
 		filter["purpose"] = purpose
 	}
