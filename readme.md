@@ -6,17 +6,12 @@
 [Workflows of JWT handling](./docs/jwt-token-handling.md)
 
 ## Test
+** Setup **
 
-Some test methods are longer to finish, e.g. token renewal has to wait for token expiration intervals. To skip this long test methods, call:
-
-```sh
-go test -short
-```
-
-To perform a full test, call:
+Currently the project is using [dep](https://golang.github.io/dep/) to manage dependencies. If you have dep up and running you can call:
 
 ```sh
-go test
+dep ensure
 ```
 
 The tests use the gomock library. To install this use:
@@ -33,6 +28,27 @@ mockgen -source=./api/user-management-api.pb.go UserManagementApiClient > mocks/
 ```
 
 For more information about testing grpc clients with go check: <https://github.com/grpc/grpc-go/blob/master/Documentation/gomock-example.md>
+
+
+** Script to run tests **
+
+```sh
+export JWT_TOKEN_KEY="<insert secret key to sign jwt>"
+export TOKEN_EXPIRATION_MIN="10" # minutes token is valid
+export TOKEN_MINIMUM_AGE_MIN="2"  # wait so many minutes at least before refreshing the token
+
+export DB_CONNECTION_STR="<mongo db connection string without prefix and auth infos>"
+export DB_USERNAME="<username for mongodb auth>"
+export DB_PASSWORD="<password for mongodb auth>"
+export DB_PREFIX="+srv" # e.g. "" (emtpy) or "+srv"
+export DB_TIMEOUT=30 # seconds until connection times out
+export DB_IDLE_CONN_TIMEOUT=45 # terminate idle connection after seconds
+export DB_MAX_POOL_SIZE=8
+export DB_DB_NAME_PREFIX="<DB_PREFIX>" # DB names will be then > <DB_PREFIX>+"hard-coded-db-name-as-we-need-it"
+
+go test  ./...
+```
+
 
 ## Build
 
