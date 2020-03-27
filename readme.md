@@ -6,7 +6,7 @@
 [Workflows of JWT handling](./docs/jwt-token-handling.md)
 
 ## Test
-** Setup **
+### Setup
 
 Currently the project is using [dep](https://golang.github.io/dep/) to manage dependencies. If you have dep up and running you can call:
 
@@ -30,7 +30,8 @@ mockgen -source=./api/user-management-api.pb.go UserManagementApiClient > mocks/
 For more information about testing grpc clients with go check: <https://github.com/grpc/grpc-go/blob/master/Documentation/gomock-example.md>
 
 
-** Script to run tests **
+### Script to run tests
+After installing the dependencies, you can add a script to initiate tests. This script is not included in this repository, since it contains secret infos, like DB password. 
 
 ```sh
 export JWT_TOKEN_KEY="<insert secret key to sign jwt>"
