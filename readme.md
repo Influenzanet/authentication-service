@@ -7,13 +7,6 @@
 
 ## Test
 ### Setup
-
-Currently the project is using [dep](https://golang.github.io/dep/) to manage dependencies. If you have dep up and running you can call:
-
-```sh
-dep ensure
-```
-
 The tests use the gomock library. To install this use:
 
 ```sh
@@ -31,7 +24,7 @@ For more information about testing grpc clients with go check: <https://github.c
 
 
 ### Script to run tests
-After installing the dependencies, you can add a script to initiate tests. This script is not included in this repository, since it contains secret infos, like DB password. 
+After installing the dependencies, you can add a script to initiate tests. This script is not included in this repository, since it contains secret infos, like DB password.
 
 ```sh
 export JWT_TOKEN_KEY="<insert secret key to sign jwt>"
