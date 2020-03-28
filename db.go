@@ -14,6 +14,10 @@ func collectionRefTempToken() *mongo.Collection {
 	return dbClient.Database(conf.DB.DBNamePrefix + "global-infos").Collection("temp-tokens")
 }
 
+func collectionAppToken() *mongo.Collection {
+	return dbClient.Database(conf.DB.DBNamePrefix + "global-infos").Collection("app-tokens")
+}
+
 // Connect to DB
 func dbInit() {
 	var err error

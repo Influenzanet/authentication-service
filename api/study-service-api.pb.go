@@ -172,7 +172,9 @@ func init() {
 	proto.RegisterType((*SubmitResponseReq)(nil), "inf.study_service_api.SubmitResponseReq")
 }
 
-func init() { proto.RegisterFile("study-service-api.proto", fileDescriptor_81f0d8f98f9be15c) }
+func init() {
+	proto.RegisterFile("study-service-api.proto", fileDescriptor_81f0d8f98f9be15c)
+}
 
 var fileDescriptor_81f0d8f98f9be15c = []byte{
 	// 362 bytes of a gzipped FileDescriptorProto
@@ -203,11 +205,11 @@ var fileDescriptor_81f0d8f98f9be15c = []byte{
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ context.Context
-var _ grpc.ClientConn
+var _ grpc.ClientConnInterface
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion4
+const _ = grpc.SupportPackageIsVersion6
 
 // StudyServiceApiClient is the client API for StudyServiceApi service.
 //
@@ -219,10 +221,10 @@ type StudyServiceApiClient interface {
 }
 
 type studyServiceApiClient struct {
-	cc *grpc.ClientConn
+	cc grpc.ClientConnInterface
 }
 
-func NewStudyServiceApiClient(cc *grpc.ClientConn) StudyServiceApiClient {
+func NewStudyServiceApiClient(cc grpc.ClientConnInterface) StudyServiceApiClient {
 	return &studyServiceApiClient{cc}
 }
 
