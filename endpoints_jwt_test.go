@@ -273,8 +273,8 @@ func TestValidateJWT(t *testing.T) {
 		}
 	})
 
-	adminToken, err1 := tokens.GenerateNewToken("test-admin-id", []string{"PARTICIPANT", "ADMIN"}, testInstanceID, conf.JWT.TokenExpiryInterval)
-	userToken, err2 := tokens.GenerateNewToken("test-user-id", []string{"PARTICIPANT"}, testInstanceID, conf.JWT.TokenExpiryInterval)
+	adminToken, err1 := tokens.GenerateNewToken("test-admin-id", "testprofid", []string{"PARTICIPANT", "ADMIN"}, testInstanceID, conf.JWT.TokenExpiryInterval, "")
+	userToken, err2 := tokens.GenerateNewToken("test-user-id", "testprofid", []string{"PARTICIPANT"}, testInstanceID, conf.JWT.TokenExpiryInterval, "")
 	if err1 != nil || err2 != nil {
 		t.Errorf("unexpected error: %s or %s", err1, err2)
 		return
@@ -356,7 +356,7 @@ func TestRenewJWT(t *testing.T) {
 	conf.JWT.TokenExpiryInterval = time.Second * 2
 	conf.JWT.TokenMinimumAgeMin = time.Second * 1
 
-	userToken, err := tokens.GenerateNewToken("test-user-id", []string{"PARTICIPANT"}, testInstanceID, conf.JWT.TokenExpiryInterval)
+	userToken, err := tokens.GenerateNewToken("test-user-id", "testprofid", []string{"PARTICIPANT"}, testInstanceID, conf.JWT.TokenExpiryInterval, "")
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 		return

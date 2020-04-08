@@ -30,7 +30,7 @@ func (s *authServiceServer) LoginWithEmail(ctx context.Context, req *api.UserCre
 	}
 
 	// generate tokens
-	token, err := tokens.GenerateNewToken(resp.UserId, resp.Roles, resp.InstanceId, conf.JWT.TokenExpiryInterval)
+	token, err := tokens.GenerateNewToken(resp.UserId, resp.ProfileId, resp.Roles, resp.InstanceId, conf.JWT.TokenExpiryInterval, resp.Username)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -70,7 +70,7 @@ func (s *authServiceServer) SignupWithEmail(ctx context.Context, req *api.UserCr
 	}
 
 	// generate tokens
-	token, err := tokens.GenerateNewToken(resp.UserId, resp.Roles, resp.InstanceId, conf.JWT.TokenExpiryInterval)
+	token, err := tokens.GenerateNewToken(resp.UserId, resp.ProfileId, resp.Roles, resp.InstanceId, conf.JWT.TokenExpiryInterval, resp.Username)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -113,6 +113,7 @@ func (s *authServiceServer) ValidateJWT(ctx context.Context, req *api.JWTRequest
 		InstanceId: parsedToken.InstanceID,
 		IssuedAt:   parsedToken.IssuedAt,
 		Payload:    parsedToken.Payload,
+		ProfilId:   parsedToken.ProfileID,
 	}, nil
 }
 
@@ -143,9 +144,10 @@ func (s *authServiceServer) RenewJWT(ctx context.Context, req *api.RefreshJWTReq
 	}
 
 	roles := tokens.GetRolesFromPayload(parsedToken.Payload)
+	username := tokens.GetUsernameFromPayload(parsedToken.Payload)
 
 	// Generate new access token:
-	newToken, err := tokens.GenerateNewToken(parsedToken.ID, roles, parsedToken.InstanceID, conf.JWT.TokenExpiryInterval)
+	newToken, err := tokens.GenerateNewToken(parsedToken.ID, parsedToken.ProfileID, roles, parsedToken.InstanceID, conf.JWT.TokenExpiryInterval, username)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}

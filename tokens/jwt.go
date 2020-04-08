@@ -21,6 +21,7 @@ var (
 type UserClaims struct {
 	ID         string            `json:"id,omitempty"`
 	InstanceID string            `json:"instance_id,omitempty"`
+	ProfileID  string            `json:"profile_id,omitempty"`
 	Payload    map[string]string `json:"payload,omitempty"`
 	jwt.StandardClaims
 }
@@ -48,17 +49,21 @@ func getSecretKey() (newSecretKey []byte, err error) {
 }
 
 // GenerateNewToken create and signes a new token
-func GenerateNewToken(userID string, userRoles []string, instanceID string, experiresIn time.Duration) (string, error) {
+func GenerateNewToken(userID string, profileID string, userRoles []string, instanceID string, experiresIn time.Duration, username string) (string, error) {
 	payload := map[string]string{}
 
 	if len(userRoles) > 0 {
 		payload["roles"] = strings.Join(userRoles, ",")
+	}
+	if len(username) > 0 {
+		payload["username"] = username
 	}
 
 	// Create the Claims
 	claims := UserClaims{
 		userID,
 		instanceID,
+		profileID,
 		payload,
 		jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(experiresIn).Unix(),

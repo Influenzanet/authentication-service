@@ -43,3 +43,11 @@ func GetRolesFromPayload(payload map[string]string) []string {
 	}
 	return roles
 }
+
+func GetUsernameFromPayload(payload map[string]string) string {
+	username, ok := payload["username"]
+	if !ok {
+		return ""
+	}
+	return username
+}
