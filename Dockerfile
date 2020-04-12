@@ -1,21 +1,17 @@
-FROM golang:alpine as builder
-
-RUN apk add --no-cache curl git
-
-RUN curl -fsSL -o /usr/local/bin/dep https://github.com/golang/dep/releases/download/v0.5.4/dep-linux-amd64 && chmod +x /usr/local/bin/dep
-
-RUN mkdir -p /go/src/github.com/influenzanet/authentication-service
+FROM golang:1.14-alpine as builder
+RUN apk update && apk add --no-cache git ca-certificates && update-ca-certificates
+RUN mkdir -p /go/src/github.com/influenzanet/study-service
+ENV GO111MODULE=on
 ADD . /go/src/github.com/influenzanet/authentication-service/
 WORKDIR /go/src/github.com/influenzanet/authentication-service
-
-COPY Gopkg.toml Gopkg.lock ./
-# copies the Gopkg.toml and Gopkg.lock to WORKDIR
-
-RUN dep ensure -vendor-only
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags '-extldflags "-static"' -o main .
+COPY go.mod .
+COPY go.sum .
+RUN go mod download
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags '-extldflags "-static"' -o app .
 FROM scratch
-COPY --from=builder /go/src/github.com/influenzanet/authentication-service/main /app/
-VOLUME ["/app/keys"]
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=builder /go/src/github.com/influenzanet/authentication-service/app /app/
 WORKDIR /app
-EXPOSE 3100:3100
-CMD ["./main"]
+EXPOSE 5201:5201
+CMD ["./app"]
