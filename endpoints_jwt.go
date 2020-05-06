@@ -19,7 +19,7 @@ func (s *authServiceServer) Status(ctx context.Context, _ *empty.Empty) (*api.St
 	return nil, status.Error(codes.Unimplemented, "not implemented")
 }
 
-func (s *authServiceServer) LoginWithEmail(ctx context.Context, req *api.UserCredentials) (*api.TokenResponse, error) {
+func (s *authServiceServer) LoginWithEmail(ctx context.Context, req *api.LoginWithEmailMsg) (*api.TokenResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid username and/or password")
 	}
@@ -55,6 +55,7 @@ func (s *authServiceServer) LoginWithEmail(ctx context.Context, req *api.UserCre
 		AccessToken:  token,
 		RefreshToken: rt,
 		ExpiresIn:    int32(conf.JWT.TokenExpiryInterval / time.Minute),
+		TODO: send profiles and selected
 	}, nil
 }
 
@@ -95,7 +96,12 @@ func (s *authServiceServer) SignupWithEmail(ctx context.Context, req *api.UserCr
 		AccessToken:  token,
 		RefreshToken: rt,
 		ExpiresIn:    int32(conf.JWT.TokenExpiryInterval / time.Minute),
+		TODO: send profiles and selected
 	}, nil
+}
+
+func (s *authServiceServer) SwithProfile(ctx context.Context, req *api.ProfileRequest) (*api.TokenInfos, error) {
+	return nil, status.Error(codes.Unimplemented, "unimplemented")
 }
 
 func (s *authServiceServer) ValidateJWT(ctx context.Context, req *api.JWTRequest) (*api.TokenInfos, error) {

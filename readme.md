@@ -1,10 +1,5 @@
 # Authorization Service
 
-## Documentation
-
-[API documentation](./docs/api.md)
-[Workflows of JWT handling](./docs/jwt-token-handling.md)
-
 ## Test
 ### Setup
 The tests use the gomock library. To install this use:

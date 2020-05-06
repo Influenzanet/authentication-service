@@ -24,33 +24,29 @@ func TestLoginWithEmail(t *testing.T) {
 	s := authServiceServer{}
 
 	t.Run("Testing login without payload", func(t *testing.T) {
-		resp, err := s.LoginWithEmail(context.Background(), nil)
-		st, ok := status.FromError(err)
-		if !ok || err == nil || st.Message() != "invalid username and/or password" || resp != nil {
-			t.Errorf("wrong error: %s", err.Error())
-			t.Errorf("or response: %s", resp)
-			return
+		_, err := s.LoginWithEmail(context.Background(), nil)
+		ok, msg := shouldHaveGrpcErrorStatus(err, "invalid username and/or password")
+		if !ok {
+			t.Error(msg)
 		}
 	})
 
 	t.Run("Testing login with empty payload", func(t *testing.T) {
-		req := &api.UserCredentials{}
+		req := &api.LoginWithEmailMsg{}
 		mockUserManagementClient.EXPECT().LoginWithEmail(
 			gomock.Any(),
 			gomock.Any(),
 		).Return(nil, errors.New("invalid username and/or password"))
 
-		resp, err := s.LoginWithEmail(context.Background(), req)
-		st, ok := status.FromError(err)
-		if !ok || st == nil || st.Message() != "invalid username and/or password" || resp != nil {
-			t.Errorf("wrong error: %s", err.Error())
-			t.Errorf("or response: %s", resp)
-			return
+		_, err := s.LoginWithEmail(context.Background(), req)
+		ok, msg := shouldHaveGrpcErrorStatus(err, "invalid username and/or password")
+		if !ok {
+			t.Error(msg)
 		}
 	})
 
 	t.Run("Testing login with wrong email", func(t *testing.T) {
-		req := &api.UserCredentials{
+		req := &api.LoginWithEmailMsg{
 			Email:      "wrong@test.com",
 			Password:   "dfdfbmdpfbmd",
 			InstanceId: testInstanceID,
@@ -60,17 +56,15 @@ func TestLoginWithEmail(t *testing.T) {
 			gomock.Any(),
 		).Return(nil, errors.New("invalid username and/or password"))
 
-		resp, err := s.LoginWithEmail(context.Background(), req)
-		st, ok := status.FromError(err)
-		if !ok || st == nil || st.Message() != "invalid username and/or password" || resp != nil {
-			t.Errorf("wrong error: %s", err.Error())
-			t.Errorf("or response: %s", resp)
-			return
+		_, err := s.LoginWithEmail(context.Background(), req)
+		ok, msg := shouldHaveGrpcErrorStatus(err, "invalid username and/or password")
+		if !ok {
+			t.Error(msg)
 		}
 	})
 
 	t.Run("Testing login with wrong password", func(t *testing.T) {
-		req := &api.UserCredentials{
+		req := &api.LoginWithEmailMsg{
 			Email:      "test@test.com",
 			Password:   "wrongpw",
 			InstanceId: testInstanceID,
@@ -80,17 +74,15 @@ func TestLoginWithEmail(t *testing.T) {
 			gomock.Any(),
 		).Return(nil, errors.New("invalid username and/or password"))
 
-		resp, err := s.LoginWithEmail(context.Background(), req)
-		st, ok := status.FromError(err)
-		if !ok || st == nil || st.Message() != "invalid username and/or password" || resp != nil {
-			t.Errorf("wrong error: %s", err.Error())
-			t.Errorf("or response: %s", resp)
-			return
+		_, err := s.LoginWithEmail(context.Background(), req)
+		ok, msg := shouldHaveGrpcErrorStatus(err, "invalid username and/or password")
+		if !ok {
+			t.Error(msg)
 		}
 	})
 
 	t.Run("Testing login with correct email and password", func(t *testing.T) {
-		req := &api.UserCredentials{
+		req := &api.LoginWithEmailMsg{
 			Email:      "test@test.com",
 			Password:   "dfdfbmdpfbmd",
 			InstanceId: testInstanceID,
@@ -100,9 +92,16 @@ func TestLoginWithEmail(t *testing.T) {
 			gomock.Any(),
 			gomock.Any(),
 		).Return(&api.UserAuthInfo{
-			UserId:     "testid",
-			Roles:      []string{"participant"},
-			InstanceId: testInstanceID,
+			UserId:           "testid",
+			Roles:            []string{"PARTICIPANT", "RESEARCHER"},
+			InstanceId:       testInstanceID,
+			AccountId:        "test@test.com",
+			AccountConfirmed: false,
+			Profiles: []*api.Profile{
+				{Id: "testprofile_id", Nickname: "test"},
+			},
+			SelectedProfile:   &api.Profile{Id: "testprofile_id", Nickname: "test"},
+			PreferredLanguage: "en",
 		}, nil)
 		mockUserManagementClient.EXPECT().TokenRefreshed(
 			gomock.Any(),
@@ -117,6 +116,15 @@ func TestLoginWithEmail(t *testing.T) {
 		}
 		if len(resp.AccessToken) < 1 || len(resp.RefreshToken) < 1 {
 			t.Errorf("unexpected response: %s", resp)
+			return
+		}
+		if resp.SelectedProfileId != "testprofile_id" {
+			t.Errorf("unexpected selected profile: %s", resp.SelectedProfileId)
+			return
+		}
+		if len(resp.Profiles) != 1 {
+			t.Errorf("unexpected number of profiles: %d", len(resp.Profiles))
+			return
 		}
 	})
 }
@@ -130,32 +138,28 @@ func TestSignup(t *testing.T) {
 	s := authServiceServer{}
 
 	t.Run("Testing signup without payload", func(t *testing.T) {
-		resp, err := s.SignupWithEmail(context.Background(), nil)
-		st, ok := status.FromError(err)
-		if !ok || st == nil || st.Message() != "missing arguments" || resp != nil {
-			t.Errorf("wrong error: %s", err.Error())
-			t.Errorf("or response: %s", resp)
-			return
+		_, err := s.SignupWithEmail(context.Background(), nil)
+		ok, msg := shouldHaveGrpcErrorStatus(err, "missing arguments")
+		if !ok {
+			t.Error(msg)
 		}
 	})
 
 	t.Run("with empty payload", func(t *testing.T) {
-		req := &api.UserCredentials{}
+		req := &api.SignupWithEmailMsg{}
 		mockUserManagementClient.EXPECT().SignupWithEmail(
 			gomock.Any(),
 			gomock.Any(),
 		).Return(nil, status.Error(codes.InvalidArgument, "missing arguments"))
-		resp, err := s.SignupWithEmail(context.Background(), req)
-		st, ok := status.FromError(err)
-		if !ok || st == nil || st.Message() != "missing arguments" || resp != nil {
-			t.Errorf("wrong error: %s", err.Error())
-			t.Errorf("or response: %s", resp)
-			return
+		_, err := s.SignupWithEmail(context.Background(), req)
+		ok, msg := shouldHaveGrpcErrorStatus(err, "missing arguments")
+		if !ok {
+			t.Error(msg)
 		}
 	})
 
 	t.Run("with too short password", func(t *testing.T) {
-		req := &api.UserCredentials{
+		req := &api.SignupWithEmailMsg{
 			Email:      "test@test.com",
 			Password:   "short",
 			InstanceId: testInstanceID,
@@ -165,12 +169,10 @@ func TestSignup(t *testing.T) {
 			gomock.Any(),
 		).Return(nil, status.Error(codes.InvalidArgument, "password too weak"))
 
-		resp, err := s.SignupWithEmail(context.Background(), req)
-		st, ok := status.FromError(err)
-		if !ok || st == nil || st.Message() != "password too weak" || resp != nil {
-			t.Errorf("wrong error: %s", err.Error())
-			t.Errorf("or response: %s", resp)
-			return
+		_, err := s.SignupWithEmail(context.Background(), req)
+		ok, msg := shouldHaveGrpcErrorStatus(err, "password too weak")
+		if !ok {
+			t.Error(msg)
 		}
 	})
 
@@ -185,17 +187,15 @@ func TestSignup(t *testing.T) {
 			gomock.Any(),
 		).Return(nil, status.Error(codes.InvalidArgument, "email not valid"))
 
-		resp, err := s.SignupWithEmail(context.Background(), req)
-		st, ok := status.FromError(err)
-		if !ok || st == nil || st.Message() != "email not valid" || resp != nil {
-			t.Errorf("wrong error: %s", err.Error())
-			t.Errorf("or response: %s", resp)
-			return
+		_, err := s.SignupWithEmail(context.Background(), req)
+		ok, msg := shouldHaveGrpcErrorStatus(err, "email not valid")
+		if !ok {
+			t.Error(msg)
 		}
 	})
 
 	t.Run("with existing user", func(t *testing.T) {
-		req := &api.UserCredentials{
+		req := &api.SignupWithEmailMsg{
 			Email:      "test@test.com",
 			Password:   "short",
 			InstanceId: testInstanceID,
@@ -205,29 +205,36 @@ func TestSignup(t *testing.T) {
 			gomock.Any(),
 		).Return(nil, status.Error(codes.Internal, "user already exists"))
 
-		resp, err := s.SignupWithEmail(context.Background(), req)
-		st, ok := status.FromError(err)
-		if !ok || st == nil || st.Message() != "user already exists" || resp != nil {
-			t.Errorf("wrong error: %s", err.Error())
-			t.Errorf("or response: %s", resp)
-			return
+		_, err := s.SignupWithEmail(context.Background(), req)
+		ok, msg := shouldHaveGrpcErrorStatus(err, "user already exists")
+		if !ok {
+			t.Error(msg)
 		}
 	})
 
 	t.Run("with valid arguments", func(t *testing.T) {
-		req := &api.UserCredentials{
-			Email:      "test@test.com",
-			Password:   "short",
-			InstanceId: testInstanceID,
+		req := &api.SignupWithEmailMsg{
+			Email:             "test@test.com",
+			Password:          "short",
+			InstanceId:        testInstanceID,
+			PreferredLanguage: "de",
+			WantsNewsletter:   false,
 		}
 
 		mockUserManagementClient.EXPECT().SignupWithEmail(
 			gomock.Any(),
 			gomock.Any(),
 		).Return(&api.UserAuthInfo{
-			UserId:     "testid",
-			Roles:      []string{"participant"},
-			InstanceId: "test-inst",
+			UserId:           "testid",
+			Roles:            []string{"participant"},
+			InstanceId:       testInstanceID,
+			AccountId:        "test@test.com",
+			AccountConfirmed: false,
+			Profiles: []*api.Profile{
+				{Id: "testprofile_id", Nickname: "test"},
+			},
+			SelectedProfile:   &api.Profile{Id: "testprofile_id", Nickname: "test"},
+			PreferredLanguage: req.PreferredLanguage,
 		}, nil)
 		mockUserManagementClient.EXPECT().TokenRefreshed(
 			gomock.Any(),
@@ -241,8 +248,21 @@ func TestSignup(t *testing.T) {
 		}
 		if len(resp.AccessToken) < 1 || len(resp.RefreshToken) < 1 {
 			t.Errorf("unexpected response: %s", resp)
+			return
+		}
+		if resp.SelectedProfileId != "testprofile_id" {
+			t.Errorf("unexpected selected profile: %s", resp.SelectedProfileId)
+			return
+		}
+		if len(resp.Profiles) != 1 {
+			t.Errorf("unexpected number of profiles: %d", len(resp.Profiles))
+			return
 		}
 	})
+}
+
+func TestSwitchProfile(t *testing.T) {
+	t.Error("test unimplemented")
 }
 
 func TestValidateJWT(t *testing.T) {
@@ -252,24 +272,19 @@ func TestValidateJWT(t *testing.T) {
 	s := authServiceServer{}
 
 	t.Run("without payload", func(t *testing.T) {
-		resp, err := s.ValidateJWT(context.Background(), nil)
-		st, ok := status.FromError(err)
-		if !ok || st == nil || st.Message() != "missing arguments" || resp != nil {
-			t.Errorf("wrong error: %s", err.Error())
-			t.Errorf("or response: %s", resp)
-			return
+		_, err := s.ValidateJWT(context.Background(), nil)
+		ok, msg := shouldHaveGrpcErrorStatus(err, "missing arguments")
+		if !ok {
+			t.Error(msg)
 		}
 	})
 
 	t.Run("with empty payload", func(t *testing.T) {
 		req := &api.JWTRequest{}
-
-		resp, err := s.ValidateJWT(context.Background(), req)
-		st, ok := status.FromError(err)
-		if !ok || st == nil || st.Message() != "missing arguments" || resp != nil {
-			t.Errorf("wrong error: %s", err.Error())
-			t.Errorf("or response: %s", resp)
-			return
+		_, err := s.ValidateJWT(context.Background(), req)
+		ok, msg := shouldHaveGrpcErrorStatus(err, "missing arguments")
+		if !ok {
+			t.Error(msg)
 		}
 	})
 
@@ -285,12 +300,10 @@ func TestValidateJWT(t *testing.T) {
 			Token: adminToken + "x",
 		}
 
-		resp, err := s.ValidateJWT(context.Background(), req)
-		st, ok := status.FromError(err)
-		if !ok || st == nil || st.Message() != "invalid token" || resp != nil {
-			t.Errorf("wrong error: %s", err.Error())
-			t.Errorf("or response: %s", resp)
-			return
+		_, err := s.ValidateJWT(context.Background(), req)
+		ok, msg := shouldHaveGrpcErrorStatus(err, "invalid token")
+		if !ok {
+			t.Error(msg)
 		}
 	})
 
@@ -337,12 +350,10 @@ func TestValidateJWT(t *testing.T) {
 		req := &api.JWTRequest{
 			Token: adminToken,
 		}
-		resp, err := s.ValidateJWT(context.Background(), req)
-		st, ok := status.FromError(err)
-		if !ok || st == nil || st.Message() != "invalid token" || resp != nil {
-			t.Errorf("wrong error: %s", err.Error())
-			t.Errorf("or response: %s", resp)
-			return
+		_, err := s.ValidateJWT(context.Background(), req)
+		ok, msg := shouldHaveGrpcErrorStatus(err, "invalid token")
+		if !ok {
+			t.Error(msg)
 		}
 	})
 }
@@ -366,24 +377,20 @@ func TestRenewJWT(t *testing.T) {
 	s := authServiceServer{}
 
 	t.Run("Testing token refresh without token", func(t *testing.T) {
-		resp, err := s.RenewJWT(context.Background(), nil)
-		st, ok := status.FromError(err)
-		if !ok || st == nil || st.Message() != "missing arguments" || resp != nil {
-			t.Errorf("wrong error: %s", err.Error())
-			t.Errorf("or response: %s", resp)
-			return
+		_, err := s.RenewJWT(context.Background(), nil)
+		ok, msg := shouldHaveGrpcErrorStatus(err, "missing arguments")
+		if !ok {
+			t.Error(msg)
 		}
 	})
 
 	t.Run("with empty token", func(t *testing.T) {
 		req := &api.RefreshJWTRequest{}
 
-		resp, err := s.RenewJWT(context.Background(), req)
-		st, ok := status.FromError(err)
-		if !ok || st == nil || st.Message() != "missing arguments" || resp != nil {
-			t.Errorf("wrong error: %s", err.Error())
-			t.Errorf("or response: %s", resp)
-			return
+		_, err := s.RenewJWT(context.Background(), req)
+		ok, msg := shouldHaveGrpcErrorStatus(err, "missing arguments")
+		if !ok {
+			t.Error(msg)
 		}
 	})
 
@@ -392,12 +399,10 @@ func TestRenewJWT(t *testing.T) {
 			AccessToken:  userToken + "x",
 			RefreshToken: refreshToken,
 		}
-		resp, err := s.RenewJWT(context.Background(), req)
-		st, ok := status.FromError(err)
-		if !ok || st == nil || st.Message() != "wrong access token" || resp != nil {
-			t.Errorf("wrong error: %s", err.Error())
-			t.Errorf("or response: %s", resp)
-			return
+		_, err := s.RenewJWT(context.Background(), req)
+		ok, msg := shouldHaveGrpcErrorStatus(err, "wrong access token")
+		if !ok {
+			t.Error(msg)
 		}
 	})
 
@@ -408,12 +413,10 @@ func TestRenewJWT(t *testing.T) {
 			RefreshToken: refreshToken,
 		}
 
-		resp, err := s.RenewJWT(context.Background(), req)
-		st, ok := status.FromError(err)
-		if !ok || st == nil || st.Message() != "can't renew token so often" || resp != nil {
-			t.Errorf("wrong error: %s", err.Error())
-			t.Errorf("or response: %s", resp)
-			return
+		_, err := s.RenewJWT(context.Background(), req)
+		ok, msg := shouldHaveGrpcErrorStatus(err, "can't renew token so often")
+		if !ok {
+			t.Error(msg)
 		}
 	})
 
@@ -434,14 +437,9 @@ func TestRenewJWT(t *testing.T) {
 		).Return(nil, errors.New("wrong refresh token"))
 
 		_, err := s.RenewJWT(context.Background(), req)
-		if err == nil {
-			t.Error("should fails with error")
-			return
-		}
-		st, _ := status.FromError(err)
-		if st.Message() != "wrong refresh token" {
-			t.Errorf("unexpected error: %s", st.Message())
-			return
+		ok, msg := shouldHaveGrpcErrorStatus(err, "wrong refresh token")
+		if !ok {
+			t.Error(msg)
 		}
 	})
 
