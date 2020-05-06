@@ -2,33 +2,55 @@ package main
 
 import (
 	"log"
+	"net"
 
-	"github.com/gin-gonic/gin"
+	api "github.com/influenzanet/authentication-service/api"
+	"go.mongodb.org/mongo-driver/mongo"
+
+	"google.golang.org/grpc"
 )
 
-var userManagementServer = "http://user-management:3200/v1"
+type authServiceServer struct {
+}
+
+var conf Config
+var dbClient *mongo.Client
+var clients = APIClients{}
+
+// APIClients holds the service clients to the internal services
+type APIClients struct {
+	userManagement api.UserManagementApiClient
+}
+
+func connectToUserManagementServer() *grpc.ClientConn {
+	conn, err := grpc.Dial(conf.ServiceURLs.UserManagement, grpc.WithInsecure())
+	if err != nil {
+		log.Fatalf("failed to connect: %v", err)
+	}
+	return conn
+}
 
 func init() {
-	gin.SetMode(gin.ReleaseMode)
+	initConfig()
+	dbInit()
+	log.Println("initialization ready")
 }
 
 func main() {
-	log.Println("Hello World")
+	log.Println("connect to user management service")
+	userManagementServerConn := connectToUserManagementServer()
+	defer userManagementServerConn.Close()
+	clients.userManagement = api.NewUserManagementApiClient(userManagementServerConn)
 
-	router := gin.Default()
-
-	v1 := router.Group("/v1")
-	{
-		userHandles := v1.Group("/user")
-		userHandles.Use(RequirePayload())
-		userHandles.POST("/login", loginHandl)
-		userHandles.POST("/signup", signupHandl)
-
-		tokenHandles := v1.Group("/token")
-		tokenHandles.Use(ExtractToken())
-		tokenHandles.GET("/validate", validateTokenHandl)
-		tokenHandles.GET("/renew", renewTokenHandl)
+	lis, err := net.Listen("tcp", ":"+conf.Port)
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
 	}
+	log.Println("wait connections on port " + conf.Port)
 
-	log.Fatal(router.Run(":3100"))
+	grpcServer := grpc.NewServer()
+	api.RegisterAuthServiceApiServer(grpcServer, &authServiceServer{})
+	if err = grpcServer.Serve(lis); err != nil {
+		log.Fatal(err)
+	}
 }
