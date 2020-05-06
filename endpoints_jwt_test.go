@@ -262,7 +262,103 @@ func TestSignup(t *testing.T) {
 }
 
 func TestSwitchProfile(t *testing.T) {
-	t.Error("test unimplemented")
+	s := authServiceServer{}
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	mockUserManagementClient := api_mock.NewMockUserManagementApiClient(mockCtrl)
+	clients.userManagement = mockUserManagementClient
+
+	t.Run("without payload", func(t *testing.T) {
+		_, err := s.SwitchProfile(context.Background(), nil)
+		ok, msg := shouldHaveGrpcErrorStatus(err, "missing arguments")
+		if !ok {
+			t.Error(msg)
+		}
+	})
+
+	t.Run("with empty payload", func(t *testing.T) {
+		req := &api.ProfileRequest{}
+		mockUserManagementClient.EXPECT().SwitchProfile(
+			gomock.Any(),
+			gomock.Any(),
+		).Return(nil, status.Error(codes.InvalidArgument, "missing arguments"))
+		_, err := s.SwitchProfile(context.Background(), req)
+		ok, msg := shouldHaveGrpcErrorStatus(err, "missing arguments")
+		if !ok {
+			t.Error(msg)
+		}
+	})
+
+	t.Run("with not existing profile", func(t *testing.T) {
+		req := &api.ProfileRequest{
+			Token: &api.TokenInfos{
+				Id:         "userid",
+				InstanceId: testInstanceID,
+			},
+			Profile: &api.Profile{
+				Id: "profile_id",
+			},
+		}
+		mockUserManagementClient.EXPECT().SwitchProfile(
+			gomock.Any(),
+			gomock.Any(),
+		).Return(nil, status.Error(codes.InvalidArgument, "profile not found"))
+		_, err := s.SwitchProfile(context.Background(), req)
+		ok, msg := shouldHaveGrpcErrorStatus(err, "profile not found")
+		if !ok {
+			t.Error(msg)
+		}
+	})
+
+	t.Run("with existing profile", func(t *testing.T) {
+		req := &api.ProfileRequest{
+			Token: &api.TokenInfos{
+				Id:         "userid",
+				InstanceId: testInstanceID,
+			},
+			Profile: &api.Profile{
+				Id: "testprofile_id",
+			},
+		}
+		mockUserManagementClient.EXPECT().SwitchProfile(
+			gomock.Any(),
+			gomock.Any(),
+		).Return(&api.UserAuthInfo{
+			UserId:           "testid",
+			Roles:            []string{"participant"},
+			InstanceId:       testInstanceID,
+			AccountId:        "test@test.com",
+			AccountConfirmed: false,
+			Profiles: []*api.Profile{
+				{Id: "main", Nickname: "test"},
+				{Id: "testprofile_id", Nickname: "test"},
+			},
+			SelectedProfile:   &api.Profile{Id: "testprofile_id", Nickname: "test"},
+			PreferredLanguage: "en",
+		}, nil)
+		mockUserManagementClient.EXPECT().TokenRefreshed(
+			gomock.Any(),
+			gomock.Any(),
+		).Return(&api.Status{}, nil)
+		resp, err := s.SwitchProfile(context.Background(), req)
+		if err != nil {
+			t.Errorf("unexpected error: %s", err.Error())
+			return
+		}
+		if len(resp.AccessToken) < 1 || len(resp.RefreshToken) < 1 {
+			t.Errorf("unexpected response: %s", resp)
+			return
+		}
+		if resp.SelectedProfileId != "testprofile_id" {
+			t.Errorf("unexpected selected profile: %s", resp.SelectedProfileId)
+			return
+		}
+		if len(resp.Profiles) != 2 {
+			t.Errorf("unexpected number of profiles: %d", len(resp.Profiles))
+			return
+		}
+	})
 }
 
 func TestValidateJWT(t *testing.T) {

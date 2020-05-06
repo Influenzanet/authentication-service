@@ -105,7 +105,45 @@ func (s *authServiceServer) SignupWithEmail(ctx context.Context, req *api.Signup
 }
 
 func (s *authServiceServer) SwitchProfile(ctx context.Context, req *api.ProfileRequest) (*api.TokenResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "unimplemented")
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "missing arguments")
+	}
+	resp, err := clients.userManagement.SwitchProfile(context.Background(), req)
+	if err != nil {
+		log.Printf("error during switching profiles: %s", err.Error())
+		return nil, err
+	}
+
+	// generate tokens
+	token, err := tokens.GenerateNewToken(resp.UserId, resp.SelectedProfile.Id, resp.Roles, resp.InstanceId, conf.JWT.TokenExpiryInterval, resp.AccountId)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	rt, err := tokens.GenerateUniqueTokenString()
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	// submit refresh token to user management
+	_, err = clients.userManagement.TokenRefreshed(context.Background(), &api.RefreshTokenRequest{
+		InstanceId:   resp.InstanceId,
+		RefreshToken: rt,
+		UserId:       resp.UserId,
+	})
+	if err != nil {
+		st := status.Convert(err)
+		log.Printf("error during signup with email: %s: %s", st.Code(), st.Message())
+		return nil, status.Error(codes.Internal, st.Message())
+	}
+
+	return &api.TokenResponse{
+		AccessToken:       token,
+		RefreshToken:      rt,
+		ExpiresIn:         int32(conf.JWT.TokenExpiryInterval / time.Minute),
+		Profiles:          resp.Profiles,
+		SelectedProfileId: resp.SelectedProfile.Id,
+		PreferredLanguage: resp.PreferredLanguage,
+	}, nil
 }
 
 func (s *authServiceServer) ValidateJWT(ctx context.Context, req *api.JWTRequest) (*api.TokenInfos, error) {
