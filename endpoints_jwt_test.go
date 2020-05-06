@@ -177,7 +177,7 @@ func TestSignup(t *testing.T) {
 	})
 
 	t.Run("with invalid email", func(t *testing.T) {
-		req := &api.UserCredentials{
+		req := &api.SignupWithEmailMsg{
 			Email:      "test-test.com",
 			Password:   "short",
 			InstanceId: testInstanceID,

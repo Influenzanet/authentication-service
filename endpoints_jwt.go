@@ -30,7 +30,7 @@ func (s *authServiceServer) LoginWithEmail(ctx context.Context, req *api.LoginWi
 	}
 
 	// generate tokens
-	token, err := tokens.GenerateNewToken(resp.UserId, resp.ProfileId, resp.Roles, resp.InstanceId, conf.JWT.TokenExpiryInterval, resp.Username)
+	token, err := tokens.GenerateNewToken(resp.UserId, resp.SelectedProfile.Id, resp.Roles, resp.InstanceId, conf.JWT.TokenExpiryInterval, resp.AccountId)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -52,14 +52,16 @@ func (s *authServiceServer) LoginWithEmail(ctx context.Context, req *api.LoginWi
 	}
 
 	return &api.TokenResponse{
-		AccessToken:  token,
-		RefreshToken: rt,
-		ExpiresIn:    int32(conf.JWT.TokenExpiryInterval / time.Minute),
-		TODO: send profiles and selected
+		AccessToken:       token,
+		RefreshToken:      rt,
+		ExpiresIn:         int32(conf.JWT.TokenExpiryInterval / time.Minute),
+		Profiles:          resp.Profiles,
+		SelectedProfileId: resp.SelectedProfile.Id,
+		PreferredLanguage: resp.PreferredLanguage,
 	}, nil
 }
 
-func (s *authServiceServer) SignupWithEmail(ctx context.Context, req *api.UserCredentials) (*api.TokenResponse, error) {
+func (s *authServiceServer) SignupWithEmail(ctx context.Context, req *api.SignupWithEmailMsg) (*api.TokenResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "missing arguments")
 	}
@@ -71,7 +73,7 @@ func (s *authServiceServer) SignupWithEmail(ctx context.Context, req *api.UserCr
 	}
 
 	// generate tokens
-	token, err := tokens.GenerateNewToken(resp.UserId, resp.ProfileId, resp.Roles, resp.InstanceId, conf.JWT.TokenExpiryInterval, resp.Username)
+	token, err := tokens.GenerateNewToken(resp.UserId, resp.SelectedProfile.Id, resp.Roles, resp.InstanceId, conf.JWT.TokenExpiryInterval, resp.AccountId)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -93,14 +95,16 @@ func (s *authServiceServer) SignupWithEmail(ctx context.Context, req *api.UserCr
 	}
 
 	return &api.TokenResponse{
-		AccessToken:  token,
-		RefreshToken: rt,
-		ExpiresIn:    int32(conf.JWT.TokenExpiryInterval / time.Minute),
-		TODO: send profiles and selected
+		AccessToken:       token,
+		RefreshToken:      rt,
+		ExpiresIn:         int32(conf.JWT.TokenExpiryInterval / time.Minute),
+		Profiles:          resp.Profiles,
+		SelectedProfileId: resp.SelectedProfile.Id,
+		PreferredLanguage: resp.PreferredLanguage,
 	}, nil
 }
 
-func (s *authServiceServer) SwithProfile(ctx context.Context, req *api.ProfileRequest) (*api.TokenInfos, error) {
+func (s *authServiceServer) SwitchProfile(ctx context.Context, req *api.ProfileRequest) (*api.TokenResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "unimplemented")
 }
 
